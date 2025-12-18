@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 /**
  * Custom hook to create an effect with an AbortController
@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react';
 export function useAbortableEffect(
   effect: (signal: AbortSignal) => void | (() => void),
   deps: React.DependencyList = []
-) {
+): void {
   useEffect(() => {
     // Create a new AbortController for this effect instance
     const abortController = new AbortController();
@@ -20,7 +20,7 @@ export function useAbortableEffect(
     const cleanup = effect(signal);
 
     // Return cleanup function that both aborts and calls any cleanup from the effect
-    return () => {
+    return (): void => {
       abortController.abort();
       if (typeof cleanup === 'function') {
         cleanup();
@@ -33,7 +33,7 @@ export function useAbortableEffect(
  * Hook to provide an AbortSignal that's tied to component lifecycle
  * Returns a fresh signal each time the dependencies change
  */
-export function useAbortSignal(deps: React.DependencyList = []) {
+export function useAbortSignal(deps: React.DependencyList = []): AbortSignal {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export function useAbortSignal(deps: React.DependencyList = []) {
     // Create new controller
     abortControllerRef.current = new AbortController();
 
-    return () => {
+    return (): void => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
         abortControllerRef.current = null;

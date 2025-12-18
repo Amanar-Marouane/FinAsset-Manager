@@ -8,44 +8,73 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 
-export function MultiSelect({
+// New typed API
+type Primitive = string | number
+
+interface MultiSelectProps<TItem, TValue extends Primitive = string> {
+    options: TItem[]
+    value?: TValue | TValue[] | null
+    // allow undefined to be passed in some flows under strict exactOptionalPropertyTypes
+    onValueChange: (v: TValue | TValue[] | null | undefined) => void
+    placeholder?: string
+    searchPlaceholder?: string
+    emptyMessage?: string
+    getLabel?: (item: TItem) => React.ReactNode
+    getValue?: (item: TItem) => TValue
+    className?: string
+    badgeClassName?: string
+}
+
+export function MultiSelect<TItem = unknown, TValue extends Primitive = string>({
     options,
-    value = [],
+    value,
     onValueChange,
     placeholder = "Select items...",
     searchPlaceholder = "Search items...",
     emptyMessage = "No items found.",
-    getLabel = (item) => item.name || item.label || item.toString(),
-    getValue = (item) => item.id || item.value || item,
+    getLabel = (item: TItem) => {
+        const it = item as Record<string, unknown>;
+        if (typeof it.name === 'string') return it.name;
+        if (typeof it.label === 'string') return it.label;
+        return String(it);
+    },
+    getValue = (item: TItem) => {
+        const it = item as Record<string, unknown>;
+        const candidate = it.id ?? it.value ?? it;
+        return (candidate as unknown) as TValue;
+    },
     className = "",
     badgeClassName = "",
-}) {
-    const [open, setOpen] = React.useState(false)
-    const triggerRef = React.useRef(null)
+}: MultiSelectProps<TItem, TValue>) {
+    const [open, setOpen] = React.useState<boolean>(false)
+    const triggerRef = React.useRef<HTMLButtonElement | null>(null)
 
-    const normalizeValue = React.useCallback((val) => {
+    // Local alias with an explicit type including `undefined` to satisfy strict checks
+    const currentValue: TValue | TValue[] | null | undefined = value;
+
+    const normalizeValue = React.useCallback((/* was: val: unknown */ val: TValue | TValue[] | null | undefined): TValue[] => {
         if (val === null || val === undefined) return []
-        if (Array.isArray(val)) return val
-        return [val]
+        if (Array.isArray(val)) return val as TValue[]
+        return [val as TValue]
     }, [])
 
-    const isValueSelected = React.useCallback((itemValue, currentValue) => {
+    const isValueSelected = React.useCallback((itemValue: TValue, currentValue: TValue | TValue[] | null | undefined): boolean => {
         const normalizedValue = normalizeValue(currentValue)
         return normalizedValue.includes(itemValue)
     }, [normalizeValue])
 
     const selectedItems = React.useMemo(() => {
         if (!Array.isArray(options)) return []
-        const normalizedValue = normalizeValue(value)
+        const normalizedValue = normalizeValue(currentValue)
         return options.filter(item => normalizedValue.includes(getValue(item)))
     }, [value, options, getValue, normalizeValue])
 
-    const handleSelect = React.useCallback((item) => {
+    const handleSelect = React.useCallback((item: TItem): void => {
         const itemValue = getValue(item)
-        const isSelected = isValueSelected(itemValue, value)
-        const normalizedValue = normalizeValue(value)
+        const isSelected = isValueSelected(itemValue, currentValue)
+        const normalizedValue = normalizeValue(currentValue)
+        let updatedValue: TValue[] | TValue | null | undefined
 
-        let updatedValue
         if (isSelected) {
             const filtered = normalizedValue.filter(v => v !== itemValue)
             updatedValue = Array.isArray(value) ? filtered : (filtered.length > 0 ? filtered[0] : null)
@@ -56,13 +85,12 @@ export function MultiSelect({
                 updatedValue = itemValue
             }
         }
-
         onValueChange(updatedValue)
-    }, [value, onValueChange, getValue, isValueSelected, normalizeValue])
+    }, [value, onValueChange, getValue, isValueSelected, normalizeValue, currentValue])
 
-    const handleRemove = React.useCallback((e, itemValue) => {
+    const handleRemove = React.useCallback((e: React.MouseEvent, itemValue: TValue): void => {
         e.stopPropagation()
-        const normalizedValue = normalizeValue(value)
+        const normalizedValue = normalizeValue(currentValue)
         const filtered = normalizedValue.filter(v => v !== itemValue)
 
         if (Array.isArray(value)) {
@@ -87,25 +115,28 @@ export function MultiSelect({
                             <span className="text-muted-foreground hover:text-foreground">{placeholder}</span>
                         ) : selectedItems.length <= 3 ? (
                             <div className="flex flex-wrap gap-1 w-full">
-                                {selectedItems.map((item) => (
-                                    <Badge
-                                        key={getValue(item)}
-                                        variant="secondary"
-                                        className={cn("mr-1 mb-1", badgeClassName)}
-                                    >
-                                        {getLabel(item)}
-                                        <button
-                                            className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                            onMouseDown={(e) => {
-                                                e.preventDefault()
-                                                e.stopPropagation()
-                                            }}
-                                            onClick={(e) => handleRemove(e, getValue(item))}
+                                {selectedItems.map((item) => {
+                                    const itemKey = String(getValue(item))
+                                    return (
+                                        <Badge
+                                            key={itemKey}
+                                            variant="secondary"
+                                            className={cn("mr-1 mb-1", badgeClassName)}
                                         >
-                                            <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                        </button>
-                                    </Badge>
-                                ))}
+                                            {getLabel(item)}
+                                            <button
+                                                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                }}
+                                                onClick={(e) => handleRemove(e, getValue(item))}
+                                            >
+                                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                            </button>
+                                        </Badge>
+                                    )
+                                })}
                             </div>
                         ) : (
                             <div className="flex items-center gap-1 w-full">
@@ -120,7 +151,7 @@ export function MultiSelect({
                                     }}
                                     onClick={(e) => {
                                         e.stopPropagation()
-                                        onValueChange([])
+                                        onValueChange([] as TValue[])
                                     }}
                                 >
                                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
@@ -147,9 +178,10 @@ export function MultiSelect({
                         {options.map((item) => {
                             const itemValue = getValue(item)
                             const isSelected = isValueSelected(itemValue, value)
+                            const key = String(itemValue)
                             return (
                                 <CommandItem
-                                    key={itemValue}
+                                    key={key}
                                     onSelect={() => handleSelect(item)}
                                     className="flex items-center gap-2"
                                 >

@@ -2,9 +2,18 @@
 
 import { AppContext } from '@/contexts/AppProvider';
 import { cn } from '@/lib/utils';
-import { File, FileText, Image, Plus, Upload, X } from 'lucide-react';
-import { useContext, useRef, useState } from 'react';
+import { File, FileText, Image as ImageIcon, Plus, Upload, X } from 'lucide-react';
+import React, { useContext, useRef, useState } from 'react';
 import { Button } from './button';
+
+interface FileInputProps {
+    files?: File[];
+    onFilesChange: (files: File[]) => void;
+    className?: string;
+    maxFiles?: number;
+    maxSizePerFile?: number;
+    acceptedTypes?: string[];
+}
 
 const FileInput = ({
     files = [],
@@ -13,25 +22,31 @@ const FileInput = ({
     maxFiles = 10,
     maxSizePerFile = 10 * 1024 * 1024, // 10MB
     acceptedTypes = ['image/*', '.pdf', '.csv', '.doc', '.docx', '.txt', '.xlsx', '.xls', '.sql', 'image/png', 'image/jpg', 'image/jpeg', 'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-}) => {
-    const fileInputRef = useRef(null);
-    const [dragActive, setDragActive] = useState(false);
-    const { showError, showSuccess, showWarning } = useContext(AppContext);
+}: FileInputProps) => {
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [dragActive, setDragActive] = useState<boolean>(false);
 
-    const getFileIcon = (file) => {
-        if (file.type.startsWith('image/')) {
-            return <Image className="h-4 w-4 text-blue-500" />;
-        } else if (file.type === 'application/pdf') {
+    // Safely get context methods (fallback to no-op to avoid runtime/TS issues when context is missing)
+    const ctx = useContext(AppContext);
+    const showError = ctx?.showError ?? (() => { });
+    const showSuccess = ctx?.showSuccess ?? (() => { });
+    const showWarning = ctx?.showWarning ?? (() => { });
+
+    const getFileIcon = (file: File) => {
+        const type = file.type || '';
+        if (type.startsWith('image/')) {
+            return <ImageIcon className="h-4 w-4 text-blue-500" />;
+        } else if (type === 'application/pdf') {
             return <FileText className="h-4 w-4 text-red-500" />;
-        } else if (file.type.includes('document') || file.type.includes('word')) {
+        } else if (type.includes('document') || type.includes('word')) {
             return <FileText className="h-4 w-4 text-blue-600" />;
-        } else if (file.type.includes('sheet') || file.type.includes('excel') || file.type === 'text/csv' || file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        } else if (type.includes('sheet') || type.includes('excel') || type === 'text/csv' || type === 'application/vnd.ms-excel' || type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
             return <FileText className="h-4 w-4 text-green-600" />;
         }
         return <File className="h-4 w-4 text-gray-500" />;
     };
 
-    const formatFileSize = (bytes) => {
+    const formatFileSize = (bytes: number) => {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -39,7 +54,7 @@ const FileInput = ({
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const validateFile = (file) => {
+    const validateFile = (file: File): boolean => {
         if (file.size > maxSizePerFile) {
             showError(`Le fichier "${file.name}" est trop volumineux`);
             return false;
@@ -47,8 +62,9 @@ const FileInput = ({
         return true;
     };
 
-    const handleFiles = (newFiles) => {
-        const validFiles = Array.from(newFiles).filter(validateFile);
+    const handleFiles = (newFiles: FileList | File[]) => {
+        const arr = Array.from(newFiles);
+        const validFiles = arr.filter(validateFile);
 
         if (files.length + validFiles.length > maxFiles) {
             showWarning(`Limite de fichiers atteinte`);
@@ -63,21 +79,21 @@ const FileInput = ({
         }
     };
 
-    const handleFileInput = (e) => {
-        const selectedFiles = e.target.files;
+    const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFiles = e.currentTarget.files;
         if (selectedFiles && selectedFiles.length > 0) {
             handleFiles(selectedFiles);
         }
         // Reset input value to allow selecting same file again
-        e.target.value = '';
+        e.currentTarget.value = '';
     };
 
-    const removeFile = (index) => {
+    const removeFile = (index: number) => {
         const newFiles = files.filter((_, i) => i !== index);
         onFilesChange(newFiles);
     };
 
-    const handleDrag = (e) => {
+    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         if (e.type === 'dragenter' || e.type === 'dragover') {
@@ -87,12 +103,12 @@ const FileInput = ({
         }
     };
 
-    const handleDrop = (e) => {
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
 
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             handleFiles(e.dataTransfer.files);
         }
     };

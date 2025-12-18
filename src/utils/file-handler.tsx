@@ -1,7 +1,8 @@
 import { FileText, ImageIcon, SheetIcon } from "lucide-react";
+import { JSX } from "react";
 
 // Download a file from a given URL with a specified name
-const downloadFile = (fileUrl: string, fileName: string) => {
+const downloadFile = (fileUrl: string, fileName: string): void => {
     if (typeof window === "undefined") return;
     const link = document.createElement('a');
     link.href = fileUrl;
@@ -12,7 +13,7 @@ const downloadFile = (fileUrl: string, fileName: string) => {
 };
 
 // Get MIME type from file extension
-const getMimeType = (ext: string) => {
+const getMimeType = (ext: string): string => {
     const mimeTypes: Record<string, string> = {
         'pdf': 'application/pdf',
         'doc': 'application/msword',
@@ -26,12 +27,13 @@ const getMimeType = (ext: string) => {
         'gif': 'image/gif',
         'webp': 'image/webp'
     };
-    return mimeTypes[ext] || 'application/octet-stream';
+    return typeof mimeTypes[ext] === "string" ? mimeTypes[ext] : 'application/octet-stream';
 };
 
 // Get file type (image, document, spreadsheet, file) from file name
-const getFileType = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+const getFileType = (fileName: string): 'image' | 'document' | 'spreadsheet' | 'file' => {
+    let tempExt = fileName.split('.').pop()?.toLowerCase();
+    const extension = typeof tempExt === "string" ? tempExt : '';
     const imageTypes = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
     const documentTypes = ['pdf', 'doc', 'docx'];
     const spreadsheetTypes = ['xls', 'xlsx', 'csv'];
@@ -49,7 +51,7 @@ const getFileType = (fileName: string) => {
  */
 const getFileIcon = (
     fileName: string,
-) => {
+): JSX.Element => {
     const fileType = getFileType(fileName);
     switch (fileType) {
         case 'image':

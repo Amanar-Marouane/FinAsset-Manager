@@ -1,6 +1,7 @@
 import type { DataTableConfig } from '@/config/data-table';
 import type { FilterItemSchema } from '@/lib/parsers';
 import type { ColumnSort, Row, RowData } from '@tanstack/react-table';
+import React from 'react';
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,3 +1,5 @@
+import React from "react";
+
 export interface ComponentDoc {
     id: string;
     name: string;
@@ -23,7 +25,7 @@ export interface Category {
     id: string;
     name: string;
     description: string;
-    icon: React.ComponentType<any>;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     color: string;
     count: number;
 }

@@ -1,29 +1,26 @@
 "use client"
-import React, { useEffect, useState, useCallback, useContext } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { MultiSelect } from "@/components/ui/multi-select";
 import useApi from "@/hooks/use-api";
-import debounce from "@/utils/debounce";
 
 interface OptionItem {
-    [key: string]: any;
+    [key: string]: unknown;
     id: number | string;
     name: string;
 }
 
 interface MultiSelectFieldProps {
     value?: (string | number)[];
-    onValueChange?: (value: (string | number)[]) => void;
+    onValueChange?: (value: string | number | (string | number)[] | null | undefined) => void;
     placeholder?: string;
     searchPlaceholder?: string;
     emptyMessage?: string;
     className?: string;
-    context?: React.Context<any> | null;
-    name?: string;
     apiRoute?: string | null;
     labelKey?: string;
     valueKey?: string;
     fallbackData?: OptionItem[];
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 /**
@@ -41,10 +38,13 @@ interface MultiSelectFieldProps {
  *   valueKey="id"
  * />
  * 
- * 2. With React Hook Form context:
+ * 2. With React Hook Form (pass values directly):
+ * const { watch, setValue } = useForm();
+ * const tags = watch('tags');
+ * 
  * <MultiSelectField
- *   context={FormContext}
- *   name="tags"
+ *   value={tags}
+ *   onValueChange={(val) => setValue('tags', val)}
  *   apiRoute="/api/categories"
  *   placeholder="Select categories..."
  * />
@@ -56,17 +56,24 @@ interface MultiSelectFieldProps {
  *   fallbackData={[{id: 1, name: "Option 1"}, {id: 2, name: "Option 2"}]}
  *   placeholder="Select options..."
  * />
+ * 
+ * 4. Standalone usage:
+ * const [selected, setSelected] = useState([]);
+ * 
+ * <MultiSelectField
+ *   value={selected}
+ *   onValueChange={setSelected}
+ *   apiRoute="/api/items"
+ * />
  */
 
 const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
-    value,
+    value = [],
     onValueChange,
     placeholder = "Select options...",
     searchPlaceholder = "Search...",
     emptyMessage = "No options found.",
     className = "",
-    context = null,
-    name = "items",
     apiRoute = null,
     labelKey = "name",
     valueKey = "id",
@@ -81,16 +88,17 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
     const [options, setOptions] = useState<OptionItem[]>(fallbackData);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    let formValue: (string | number)[] = value || [];
-    let setFormValue: (value: (string | number)[]) => void = onValueChange || (() => { });
-
-    if (context) {
-        const ctx = useContext(context);
-        formValue = ctx?.watch?.(name) || [];
-        setFormValue = (selectedIds: (string | number)[]) => {
-            ctx.setValue(name, selectedIds || []);
-        };
-    }
+    const handleValueChange = (v: string | number | (string | number)[] | null | undefined) => {
+        let normalized: (string | number)[] = [];
+        if (v == null) {
+            normalized = [];
+        } else if (Array.isArray(v)) {
+            normalized = v as (string | number)[];
+        } else {
+            normalized = [v as string | number];
+        }
+        onValueChange?.(normalized);
+    };
 
     const fetchOptions = useCallback(
         async (): Promise<void> => {
@@ -102,8 +110,9 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
 
             setIsLoading(true);
             try {
-                const { data } = await trigger(apiRoute);
-                setOptions(data?.data || fallbackData);
+                const { data } = await trigger<{ data: OptionItem[] }>(apiRoute);
+                const apiData = Array.isArray(data?.data) ? (data?.data as OptionItem[]) : fallbackData;
+                setOptions(apiData);
             } catch (e) {
                 console.warn("API failed, using fallback data:", e);
                 setOptions(fallbackData);
@@ -118,22 +127,18 @@ const MultiSelectField: React.FC<MultiSelectFieldProps> = ({
         fetchOptions();
     }, [fetchOptions]);
 
-    const debouncedSearch = debounce(() => {
-        fetchOptions();
-    }, 300);
-
     return (
-        <MultiSelect
+        <MultiSelect<OptionItem, string | number>
             options={options}
-            value={formValue}
-            onValueChange={setFormValue}
+            value={value}
+            onValueChange={handleValueChange}
             placeholder={isLoading ? "Loading..." : placeholder}
             searchPlaceholder={searchPlaceholder}
             emptyMessage={isLoading ? "Loading..." : emptyMessage}
-            getLabel={(item: OptionItem) => item[labelKey]}
-            getValue={(item: OptionItem) => item[valueKey]}
+            getLabel={(item: OptionItem) => String(item[labelKey] ?? '')}
+            getValue={(item: OptionItem) => (item[valueKey] as string | number)}
             className={className}
-            {...props}
+            {...(props as Record<string, unknown>)}
         />
     );
 };

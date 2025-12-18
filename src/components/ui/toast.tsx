@@ -80,10 +80,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     }, []);
 
     const toast = {
-        success: (message: string, options: ToastOptions = {}) => addToast({ type: 'success', message, ...options }),
-        error: (message: string, options: ToastOptions = {}) => addToast({ type: 'error', message, ...options }),
-        warning: (message: string, options: ToastOptions = {}) => addToast({ type: 'warning', message, ...options }),
-        info: (message: string, options: ToastOptions = {}) => addToast({ type: 'info', message, ...options }),
+        success: (message: string, options: ToastOptions = {}): number => addToast({ type: 'success', message, ...options }),
+        error: (message: string, options: ToastOptions = {}): number => addToast({ type: 'error', message, ...options }),
+        warning: (message: string, options: ToastOptions = {}): number => addToast({ type: 'warning', message, ...options }),
+        info: (message: string, options: ToastOptions = {}): number => addToast({ type: 'info', message, ...options }),
     };
 
     return (
@@ -145,7 +145,7 @@ const Toast: React.FC<ToastComponentProps> = ({ toast, onRemove }) => {
         >
             {getIcon(toast.type)}
             <div className="flex-1 min-w-0">
-                {toast.title && (
+                {toast.title != null && (
                     <p className="font-medium text-sm mb-1">{toast.title}</p>
                 )}
                 <p className="text-sm">{toast.message}</p>

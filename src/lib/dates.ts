@@ -26,10 +26,10 @@ export function getDateRangeFromPreset(preset: Preset): DateRange {
 }
 
 export function formatDateForAPI(date: Date): string {
-    return date.toISOString().split('T')[0];
+    return date.toISOString().split('T')[0] ?? '';
 }
 
-export function getDateRangePayload(range: DateRange) {
+export function getDateRangePayload(range: DateRange): { start_date: string; end_date: string } {
     return {
         start_date: formatDateForAPI(range.start),
         end_date: formatDateForAPI(range.end),

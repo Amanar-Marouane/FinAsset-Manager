@@ -1,73 +1,105 @@
 'use client';
-
 import { useState } from 'react';
 import axiosInstance from '../../axiosConfig';
-import { AxiosResponse, AxiosError } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 
-interface ApiOptions {
-  method?: string;
-  data?: any;
-  params?: Record<string, any>;
+export interface ApiOptions {
+  method?: 'get' | 'post' | 'put' | 'patch' | 'delete';
+  data?: unknown;
+  params?: Record<string, unknown>;
   headers?: Record<string, string>;
 }
 
-interface ApiResponse<T = any> {
+export type ApiResponse<T> = {
   data?: T;
-  status?: number;
-  error?: AxiosError;
+  error?: {
+    response?: {
+      message?: string;
+      data?: {
+        message?: string;
+      };
+      status?: number;
+    };
+    message: string;
+  };
+  message?: string;
+  status: number;
+  httpStatus?: number;
 }
 
-interface UseApiReturn {
-  trigger: <T = any>(url: string, options?: ApiOptions) => Promise<ApiResponse<T>>;
-  data: any;
+export type ApiError = {
+  message: string;
+  status?: number;
+  response?: {
+    message?: string;
+    data?: {
+      message?: string;
+    };
+    status?: number;
+  };
+};
+
+
+export interface UseApiReturn {
+  trigger: <T = unknown>(url: string, options?: ApiOptions) => Promise<ApiResponse<T>>;
+  data: ApiResponse<unknown> | null;
   error: AxiosError | null;
   status: number | null;
 }
 
 const useApi = (): UseApiReturn => {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ApiResponse<unknown> | null>(null);
   const [error, setError] = useState<AxiosError | null>(null);
   const [status, setStatus] = useState<number | null>(null);
 
-  /**
-   * trigger API call
-   * @param {string} url - API endpoint
-   * @param {object} options - { method, data, params, headers, ... }
-   */
-
-  const trigger = async <T = any>(url: string, options: ApiOptions = {}): Promise<ApiResponse<T>> => {
+  const trigger = async <T = unknown>(
+    url: string,
+    options: ApiOptions = {}
+  ): Promise<ApiResponse<T>> => {
     setError(null);
     setData(null);
+    setStatus(null);
 
-    const method = options.method ? options.method.toLowerCase() : 'get';
+    const method = options.method?.toLowerCase() ?? 'get';
 
     try {
       let response: AxiosResponse<T>;
 
       if (method === 'get') {
-        response = await axiosInstance.get<T>(url, {
-          params: options.params || options.data,
-          headers: options.headers,
-        });
+        response = await axiosInstance.get<T>(url, { params: options.params ?? options.data, headers: options.headers });
       } else if (method === 'delete') {
-        response = await axiosInstance.delete<T>(url, {
-          data: options.data,
-          headers: options.headers,
-        });
+        response = await axiosInstance.delete<T>(url, { data: options.data, headers: options.headers });
       } else {
-        response = await axiosInstance[method as 'post' | 'put' | 'patch']<T>(url, options.data, {
-          headers: options.headers,
-        });
+        response = await axiosInstance[method as 'post' | 'put' | 'patch']<T>(url, options.data, { headers: options.headers });
       }
 
-      setStatus(response.status);
-      setData(response.data);
+      const result: ApiResponse<T> = {
+        data: response.data,
+        status: response.status,
+        httpStatus: response.status,
+      };
 
-      return { data: response.data, status: response.status };
+      setData(result);
+      setStatus(response.status);
+      return result;
     } catch (err) {
       const axiosError = err as AxiosError;
+      const result: ApiResponse<T> = {
+        error: {
+          response: {
+            data: axiosError.response?.data as any,
+            status: axiosError.response?.status,
+          },
+          message: axiosError.message,
+        },
+        status: axiosError.response?.status ?? 500,
+        httpStatus: axiosError.response?.status,
+      };
+
       setError(axiosError);
-      return { error: axiosError };
+      setData(result);
+      setStatus(axiosError.response?.status ?? null);
+      return result;
     }
   };
 

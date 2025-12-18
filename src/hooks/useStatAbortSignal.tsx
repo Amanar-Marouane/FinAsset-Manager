@@ -15,9 +15,9 @@ export const AbortContext = createContext<AbortContextType>({
 });
 
 // Export the hook to use in stat components
-export function useStatAbortSignal() {
+export function useStatAbortSignal() : AbortSignal {
   const context = useContext(AbortContext);
-  if (!context || !context.signal) {
+  if (context == null || !context.signal) {
     console.warn("useStatAbortSignal: No signal found in context, creating new one");
     return new AbortController().signal;
   }

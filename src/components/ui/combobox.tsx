@@ -1,13 +1,35 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, JSX } from 'react';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './command';
 
-const Combobox = ({
+type Primitive = string | number;
+type Renderable = string | number | JSX.Element | null | undefined;
+
+interface ComboboxProps<TOption, TValue extends Primitive = string> {
+    value?: TValue | null;
+    onValueChange: (v: TValue | null) => void;
+    onSearchChange?: (v: string) => void;
+    options?: TOption[];
+    placeholder?: Renderable;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+    className?: string;
+    disabled?: boolean;
+    isLoading?: boolean;
+    getLabel?: (option: TOption) => Renderable;
+    getValue?: (option: TOption) => TValue | undefined;
+    renderOption?: (option: TOption) => React.ReactNode;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    [key: string]: unknown;
+}
+
+const Combobox = <TOption, TValue extends Primitive = string>({
     value,
     onValueChange,
     onSearchChange,
@@ -18,20 +40,30 @@ const Combobox = ({
     className = "",
     disabled = false,
     isLoading = false,
-    getLabel = (option) => option.label || option.name || option,
-    getValue = (option) => option.value || option.id || option,
+    getLabel = (option: TOption) => {
+        const o = option as Record<string, unknown>;
+        if (typeof o.label === 'string' || typeof o.label === 'number') return o.label as Renderable;
+        if (typeof o.name === 'string' || typeof o.name === 'number') return o.name as Renderable;
+        return String(option);
+    },
+    getValue = (option: TOption) => {
+        const o = option as Record<string, unknown>;
+        const candidate = o.value ?? o.id ?? option;
+        return candidate as TValue;
+    },
     renderOption,
-    open = false,
+    open,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onOpenChange = (_newOpen: boolean) => { },
     ...props
-}) => {
-    const [internalOpen, setInternalOpen] = useState(false);
-    const [searchValue, setSearchValue] = useState('');
-    const inputRef = useRef(null);
+}: ComboboxProps<TOption, TValue>) => {
+    const [internalOpen, setInternalOpen] = useState<boolean>(false);
+    const [searchValue, setSearchValue] = useState<string>('');
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
     // Use controlled open state if provided, otherwise use internal state
     const isOpen = open !== undefined ? open : internalOpen;
-    const handleOpenChange = (newOpen) => {
+    const handleOpenChange = (newOpen: boolean): void => {
         if (onOpenChange) {
             onOpenChange(newOpen);
         } else {
@@ -57,11 +89,15 @@ const Combobox = ({
 
             return () => clearInterval(interval);
         }
+        return () => { };
     }, [isOpen]);
 
-    const selectedOption = options.find((option) => getValue(option) === value);
+    const selectedOption = options.find((option) => {
+        const optVal = getValue(option);
+        return optVal !== undefined && value !== undefined && optVal === value;
+    });
 
-    const handleSearchValueChange = (newSearchValue) => {
+    const handleSearchValueChange = (newSearchValue: string): void => {
         setSearchValue(newSearchValue);
         if (onSearchChange) {
             onSearchChange(newSearchValue);
@@ -69,10 +105,10 @@ const Combobox = ({
     };
 
     // Check if placeholder indicates loading state
-    const isPlaceholderLoading = placeholder && (
-        placeholder.includes('Chargement') ||
-        placeholder.includes('Loading') ||
-        placeholder.includes('...')
+    const isPlaceholderLoading = Boolean(placeholder) && (
+        String(placeholder).includes('Chargement') ||
+        String(placeholder).includes('Loading') ||
+        String(placeholder).includes('...')
     );
 
     return (
@@ -88,7 +124,7 @@ const Combobox = ({
                         !value && "text-muted-foreground",
                         className
                     )}
-                    {...props}
+                    {...(props as Record<string, unknown>)}
                 >
                     <span className="flex items-center gap-2">
                         {(isLoading || isPlaceholderLoading) && (
@@ -111,31 +147,35 @@ const Combobox = ({
                     <CommandList>
                         <CommandEmpty>
                             <div className="flex items-center justify-center gap-2 py-2">
-                                {emptyMessage.includes('cours') || emptyMessage.includes('Recherche') && (
+                                {(emptyMessage.includes('cours') || emptyMessage.includes('Recherche')) && (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 )}
                                 {emptyMessage}
                             </div>
                         </CommandEmpty>
                         <CommandGroup>
-                            {options.map((option, index) => (
-                                <CommandItem
-                                    key={getValue(option) || index}
-                                    onSelect={() => {
-                                        onValueChange(getValue(option));
-                                        handleOpenChange(false);
-                                        setSearchValue(''); // Clear search after selection
-                                    }}
-                                >
-                                    <Check
-                                        className={cn(
-                                            "mr-2 h-4 w-4",
-                                            value === getValue(option) ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {renderOption ? renderOption(option) : getLabel(option)}
-                                </CommandItem>
-                            ))}
+                            {options.map((option, index) => {
+                                const optVal = getValue(option);
+                                const key = (optVal !== undefined ? String(optVal) : `opt-${index}`);
+                                return (
+                                    <CommandItem
+                                        key={key}
+                                        onSelect={() => {
+                                            onValueChange(optVal ?? null);
+                                            handleOpenChange(false);
+                                            setSearchValue(''); // Clear search after selection
+                                        }}
+                                    >
+                                        <Check
+                                            className={cn(
+                                                "mr-2 h-4 w-4",
+                                                value !== undefined && optVal === value ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        {renderOption ? renderOption(option) : getLabel(option)}
+                                    </CommandItem>
+                                );
+                            })}
                         </CommandGroup>
                     </CommandList>
                 </Command>

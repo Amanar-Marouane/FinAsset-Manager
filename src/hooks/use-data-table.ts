@@ -9,6 +9,7 @@ import {
   type TableState,
   type Updater,
   type VisibilityState,
+  type Table, // added Table type
   getCoreRowModel,
   getFacetedMinMaxValues,
   getFacetedRowModel,
@@ -42,15 +43,15 @@ const THROTTLE_MS = 50;
 
 interface UseDataTableProps<TData>
   extends Omit<
-      TableOptions<TData>,
-      | 'state'
-      | 'pageCount'
-      | 'getCoreRowModel'
-      | 'manualFiltering'
-      | 'manualPagination'
-      | 'manualSorting'
-    >,
-    Required<Pick<TableOptions<TData>, 'pageCount'>> {
+    TableOptions<TData>,
+    | 'state'
+    | 'pageCount'
+    | 'getCoreRowModel'
+    | 'manualFiltering'
+    | 'manualPagination'
+    | 'manualSorting'
+  >,
+  Required<Pick<TableOptions<TData>, 'pageCount'>> {
   initialState?: Omit<Partial<TableState>, 'sorting'> & {
     sorting?: ExtendedColumnSort<TData>[];
   };
@@ -64,7 +65,14 @@ interface UseDataTableProps<TData>
   startTransition?: React.TransitionStartFunction;
 }
 
-export function useDataTable<TData>(props: UseDataTableProps<TData>) {
+export interface UseDataTableReturn<TData> {
+  table: Table<TData>;
+  shallow: boolean;
+  debounceMs: number;
+  throttleMs: number;
+}
+
+export function useDataTable<TData>(props: UseDataTableProps<TData>): UseDataTableReturn<TData> {
   const {
     columns,
     pageCount = -1,
@@ -83,15 +91,21 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   const queryStateOptions = React.useMemo<
     Omit<UseQueryStateOptions<string>, 'parse'>
   >(
-    () => ({
-      history,
-      scroll,
-      shallow,
-      throttleMs,
-      debounceMs,
-      clearOnDefault,
-      startTransition
-    }),
+    () => {
+      // Ensure a TransitionStartFunction is always provided to match the expected type
+      const safeStartTransition: React.TransitionStartFunction =
+        startTransition ?? ((cb: () => void): void => cb());
+
+      return {
+        history,
+        scroll,
+        shallow,
+        throttleMs,
+        debounceMs,
+        clearOnDefault,
+        startTransition: safeStartTransition
+      };
+    },
     [
       history,
       scroll,
@@ -169,7 +183,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   const filterableColumns = React.useMemo(() => {
     if (enableAdvancedFilter) return [];
 
-    return columns.filter((column) => column.enableColumnFilter);
+    return columns.filter((column) => column.enableColumnFilter ?? false);
   }, [columns, enableAdvancedFilter]);
 
   const filterParsers = React.useMemo(() => {
@@ -258,10 +272,13 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
     [debouncedSetFilterValues, filterableColumns, enableAdvancedFilter]
   );
 
+  // Provide a safe initialState to avoid passing `undefined` under strict exactOptionalPropertyTypes
+  const safeInitialState = (initialState ?? {}) as Partial<TableState>;
+
   const table = useReactTable({
     ...tableProps,
     columns,
-    initialState,
+    initialState: safeInitialState,
     pageCount,
     state: {
       pagination,

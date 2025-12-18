@@ -17,8 +17,6 @@ export function DateRangePicker({ value, onChangeAction, className }: DateRangeP
         onChangeAction(newRange);
     };
 
-    const displayValue = presetLabels[value.preset];
-
     return (
         <div className={cn('flex items-center gap-2', className)}>
             <Select value={value.preset} onValueChange={handlePresetChange}>

@@ -22,15 +22,15 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Check, PlusCircle, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { JSX, useCallback, useEffect, useState } from 'react';
+import { FieldValues, FormProps, UseFormReturn } from 'react-hook-form';
 
 interface DataTableSelectFilterProps {
   filter: CustomTableFilterConfig;
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FieldValues> & FormProps<FieldValues>;
 }
 
-export function CustomDataTableSelect({ filter, form }: DataTableSelectFilterProps) {
+export function CustomDataTableSelect({ filter, form }: DataTableSelectFilterProps): JSX.Element {
   const { field, label, type, options } = filter;
   const { setValue, getValues } = form;
   const isMultiSelect = type === 'datatable-multiselect';
@@ -38,9 +38,9 @@ export function CustomDataTableSelect({ filter, form }: DataTableSelectFilterPro
   const [open, setOpen] = useState(false);
   const [selectedValues, setSelectedValues] = useState<Set<string | number>>(new Set());
 
-  useEffect(() => {
+  useEffect((): void => {
     const initialValues = getValues(field);
-    if (initialValues) {
+    if (initialValues != null && initialValues != undefined) {
       setSelectedValues(
         isMultiSelect
           ? new Set(Array.isArray(initialValues) ? initialValues : [])
@@ -52,9 +52,8 @@ export function CustomDataTableSelect({ filter, form }: DataTableSelectFilterPro
   }, [field, getValues, isMultiSelect]);
 
   const onItemSelect = useCallback(
-    //@ts-ignore
-    (option: CustomTableFilterConfig['options'][0], isSelected: boolean) => {
-      if (!option) return;
+    (option: NonNullable<CustomTableFilterConfig['options']>[number], isSelected: boolean) => {
+      if (option == null) return;
 
       if (isMultiSelect) {
         setSelectedValues((prev) => {

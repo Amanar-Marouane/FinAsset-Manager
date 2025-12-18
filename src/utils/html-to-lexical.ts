@@ -58,12 +58,13 @@ export function htmlToLexical(html: string): LexicalRoot {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = cleanHtml;
 
+    // eslint-disable-next-line no-undef
     function parseNode(node: ChildNode): Array<LexicalTextNode | LexicalParagraphNode | LexicalHeadingNode | LexicalCodeNode> {
         const children: Array<LexicalTextNode | LexicalParagraphNode | LexicalHeadingNode | LexicalCodeNode> = [];
 
         node.childNodes.forEach(child => {
             if (child.nodeType === Node.TEXT_NODE) {
-                const text = child.textContent || '';
+                const text = typeof child.textContent === "string" ? child.textContent : '';
                 if (text.trim()) {
                     children.push({
                         detail: 0,
@@ -138,13 +139,13 @@ export function htmlToLexical(html: string): LexicalRoot {
                                 .replace(/&#x27;/g, "'")
                                 .replace(/&amp;/g, '&');
 
-                            const classMatch = codeElement.className.match(/language-(\w+)/);
-                            language = classMatch ? classMatch[1] : '';
+                            const classMatch = codeElement.className.match(/language-(\w+)/) ?? ["", ""];
+                            language = typeof classMatch[1] === "string" ? classMatch[1] : '';
                         } else {
-                            codeText = child.textContent || '';
+                            codeText = typeof child.textContent === "string" ? child.textContent : '';
                         }
 
-                        children.push({
+                        const codeNode: LexicalCodeNode = {
                             children: [{
                                 detail: 0,
                                 format: 0,
@@ -158,14 +159,19 @@ export function htmlToLexical(html: string): LexicalRoot {
                             format: "",
                             indent: 0,
                             type: "code",
-                            language,
                             version: 1,
-                        });
+                        };
+
+                        if (language) {
+                            codeNode.language = language;
+                        }
+
+                        children.push(codeNode);
                         break;
                     }
                     case 'code': {
                         if ((child as HTMLElement).parentElement?.tagName.toLowerCase() !== 'pre') {
-                            const codeText = decodeHtmlEntities(child.textContent || '');
+                            const codeText = decodeHtmlEntities(typeof child.textContent === "string" ? child.textContent : '');
                             children.push({
                                 detail: 0,
                                 format: 0,

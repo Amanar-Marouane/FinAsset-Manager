@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, JSX } from "react"
 import { SerializedEditorState } from "lexical"
 import { Editor } from "../blocks/editor-00/editor"
+import { SafeString } from "@/utils/safe-string"
 
 const createInitialValue = (text?: string): SerializedEditorState => {
     return {
         root: {
             children: [
                 {
-                    children: text
+                    children: typeof text == "string"
                         ? [
                             {
                                 detail: 0,
@@ -56,6 +57,7 @@ const htmlToLexical = (html: string): SerializedEditorState => {
 
         return createInitialValue(textContent);
     } catch (error) {
+        console.log("Error has occured while converting html to lexical", error);
         // Fallback to text content
         const textContent = html
             .replace(/<[^>]*>/g, ' ')
@@ -67,8 +69,13 @@ const htmlToLexical = (html: string): SerializedEditorState => {
 
 const isLexicalJSON = (value: string): boolean => {
     try {
-        const parsed = JSON.parse(value);
-        return parsed && parsed.root && parsed.root.type === "root";
+        const parsed = JSON.parse(value) as unknown;
+        if (typeof parsed !== 'object' || parsed === null) return false;
+        const p = parsed as Record<string, unknown>;
+        const root = p.root;
+        if (typeof root !== 'object' || root === null) return false;
+        const rootObj = root as Record<string, unknown>;
+        return typeof rootObj.type === 'string' && rootObj.type === "root";
     } catch {
         return false;
     }
@@ -83,19 +90,17 @@ interface TextEditorProps {
     placeholder?: string
     onEditorChange?: (content: string) => void
     initialValue?: string
-    name?: string
     className?: string
 }
 
 export default function TextEditor({
     value = "",
     placeholder = "Start typing...",
-    onEditorChange = () => { },
+    onEditorChange = (): void => { },
     initialValue,
-    name,
     className,
     ...props
-}: TextEditorProps) {
+}: TextEditorProps): JSX.Element {
     const [editorState, setEditorState] = useState<SerializedEditorState | null>(null)
     const [isInitialized, setIsInitialized] = useState(false)
 
@@ -106,12 +111,13 @@ export default function TextEditor({
 
             const valueToUse = value || initialValue;
 
-            if (valueToUse) {
+            if (typeof valueToUse == "string") {
                 try {
                     // Check if it's Lexical JSON format
                     if (isLexicalJSON(valueToUse)) {
-                        const parsedValue = JSON.parse(valueToUse);
-                        stateToSet = parsedValue;
+                        const parsedValue = JSON.parse(valueToUse) as unknown;
+                        // validated shape — assert as SerializedEditorState
+                        stateToSet = parsedValue as SerializedEditorState;
                     }
                     // Check if it's HTML format
                     else if (isHTML(valueToUse)) {
@@ -120,9 +126,15 @@ export default function TextEditor({
                     // Try to parse as JSON (for backward compatibility)
                     else {
                         try {
-                            const parsedValue = JSON.parse(valueToUse);
-                            if (parsedValue && parsedValue.root) {
-                                stateToSet = parsedValue;
+                            const parsedValue = JSON.parse(valueToUse) as unknown;
+                            if (typeof parsedValue === 'object' && parsedValue !== null) {
+                                const pv = parsedValue as Record<string, unknown>;
+                                const root = pv.root;
+                                if (typeof root === 'object' && root !== null && Object.hasOwn(root as Record<string, unknown>, 'type')) {
+                                    stateToSet = parsedValue as SerializedEditorState;
+                                } else {
+                                    stateToSet = createInitialValue(valueToUse);
+                                }
                             } else {
                                 stateToSet = createInitialValue(valueToUse);
                             }
@@ -145,7 +157,7 @@ export default function TextEditor({
         }
     }, [value, initialValue, isInitialized])
 
-    const handleEditorChange = (newState: SerializedEditorState) => {
+    const handleEditorChange = (newState: SerializedEditorState): void => {
         setEditorState(newState)
         onEditorChange(JSON.stringify(newState))
     }
@@ -156,7 +168,7 @@ export default function TextEditor({
     }
 
     return (
-        <div className={`${className || ''}`}>
+        <div className={`${SafeString(className, '')}`}>
             <Editor
                 editorSerializedState={editorState}
                 onSerializedChange={handleEditorChange}

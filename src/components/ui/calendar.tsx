@@ -23,9 +23,7 @@ function Calendar({
                       locale = fr,
                       ...props
                   }: React.ComponentProps<typeof DayPicker> & {
-    //@ts-ignore
     buttonVariant?: React.ComponentProps<typeof Button>["variant"]
-    //@ts-ignore
     locale?: typeof fr
 }) {
     const defaultClassNames = getDefaultClassNames()
@@ -207,7 +205,6 @@ function CalendarDayButton({
     return (
         <Button
             ref={ref}
-            //@ts-ignore
             variant="ghost"
             size="icon"
             data-day={day.date.toLocaleDateString()}

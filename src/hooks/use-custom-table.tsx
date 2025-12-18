@@ -9,13 +9,53 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useApi from "./use-api";
 
-export const useCustomTable = <T extends Record<string, any>>(
+export interface PaginationResponse<T = unknown> {
+  data: T[];
+  recordsFiltered: number;
+  recordsTotal: number;
+}
+
+export interface UseCustomTableReturn<
+  T extends { id: string | number }
+> {
+  data: T[];
+  loading: boolean;
+  error: string | null;
+  pages: number;
+  currentPage: number;
+  rowsPerPage: number;
+  recordCount: number;
+  sortBy: keyof T | null;
+  sortDir: 'asc' | 'desc';
+  selectedRows: T[];
+  visibleColumns: (keyof T | string)[];
+  filters: Record<string, unknown>;
+  columns: CustomTableColumn<T>[];
+  bulkActions: CustomTableBulkAction<T>[];
+
+  // actions
+  setCurrentPage: (page: number) => void;
+  setRowsPerPage: (rowsPerPage: number) => void;
+  onCheckboxChange: (event: React.ChangeEvent<HTMLInputElement> | { target: { checked: boolean } }, row: T) => void;
+  onSelectAllRows: (event: React.ChangeEvent<HTMLInputElement> | { target: { checked: boolean } }) => void;
+  onSort: (column: keyof T) => void;
+  onFilter: (filterData: FieldValues) => void;
+  setVisibleColumns: (columns: (keyof T | string)[]) => void;
+  refresh: () => Promise<void>;
+  reload: () => Promise<void>;
+  setFilters: (filters: FieldValues) => void;
+  resetSelectedRows: () => void;
+}
+
+export const useCustomTable = <
+  T extends { id: string | number }
+>(
   url: string,
   columns: CustomTableColumn<T>[],
   bulkActions: CustomTableBulkAction<T>[] = [],
-  preFilled: any = {},
+  preFilled: Partial<Record<string, unknown>> = {},
   initialState: Partial<CustomTableTableState<T>> = {}
-) => {
+): UseCustomTableReturn<T> => {
   const [state, setState] = useState<CustomTableTableState<T>>({
     data: [],
     loading: false,
@@ -37,7 +77,7 @@ export const useCustomTable = <T extends Record<string, any>>(
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     const config = {
-      ...preFilled || {},
+      ...preFilled,
       ...currentState.filters,
       start: currentState.currentPage * currentState.rowsPerPage,
       length: currentState.rowsPerPage,
@@ -54,15 +94,16 @@ export const useCustomTable = <T extends Record<string, any>>(
       return;
     }
 
-    if (data) {
+    if (data !== null && data !== undefined) {
+      const resData = data as PaginationResponse<T>;
       setState((prev) => ({
         ...prev,
-        data: data.data,
-        pages: Math.ceil(data.recordsFiltered / currentState.rowsPerPage),
-        recordCount: data.recordsTotal,
+        data: resData.data as T[],
+        pages: Math.ceil(resData.recordsFiltered / currentState.rowsPerPage),
+        recordCount: resData.recordsTotal,
         loading: false,
-        selectedRows: prev.selectedRows.filter(selected =>
-          data.data.some(newRow => newRow.id === selected.id)
+        selectedRows: prev.selectedRows.filter((selected: T) =>
+          (resData.data as T[]).some((newRow: T) => newRow.id === selected.id)
         ),
       }));
     }
@@ -132,7 +173,7 @@ export const useCustomTable = <T extends Record<string, any>>(
     }));
   }, []);
 
-  const setVisibleColumns = useCallback((columns: (keyof T)[]) => {
+  const setVisibleColumns = useCallback((columns: (keyof T | string)[]) => {
     setState((prev) => ({ ...prev, visibleColumns: columns }));
   }, []);
 
@@ -147,14 +188,14 @@ export const useCustomTable = <T extends Record<string, any>>(
   }, [fetchData]);
 
   const tableActions = useMemo(() => ({
-    setCurrentPage: (page: number) => setState((prev) => ({ ...prev, currentPage: page })),
-    setRowsPerPage: (rowsPerPage: number) => setState((prev) => ({ ...prev, rowsPerPage, currentPage: 0 })),
+    setCurrentPage: (page: number): void => setState((prev) => ({ ...prev, currentPage: page })),
+    setRowsPerPage: (rowsPerPage: number): void => setState((prev) => ({ ...prev, rowsPerPage, currentPage: 0 })),
     onCheckboxChange,
     onSelectAllRows,
     onSort,
     onFilter,
     setVisibleColumns,
-    refresh: () => fetchData(stateRef.current),
+    refresh: (): Promise<void> => fetchData(stateRef.current),
     reload, // Add reload to the returned actions
     setFilters,
     resetSelectedRows,

@@ -2,12 +2,10 @@ import { cn } from "@/lib/utils"
 import { ContentEditable as LexicalContentEditable } from "@lexical/react/LexicalContentEditable"
 
 type ContentEditableProps = {
-  placeholder?: string
   className?: string
 }
 
 export function ContentEditable({
-  placeholder = "Start typing...",
   className,
   ...props
 }: ContentEditableProps) {

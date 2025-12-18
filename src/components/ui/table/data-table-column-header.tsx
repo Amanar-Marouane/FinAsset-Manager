@@ -17,6 +17,7 @@ import {
   ChevronUpIcon,
   Cross2Icon
 } from '@radix-ui/react-icons';
+import React, { JSX } from 'react';
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.ComponentProps<typeof DropdownMenuTrigger> {
@@ -29,7 +30,7 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   className,
   ...props
-}: DataTableColumnHeaderProps<TData, TValue>) {
+}: DataTableColumnHeaderProps<TData, TValue>): JSX.Element {
   if (!column.getCanSort() && !column.getCanHide()) {
     return <div className={cn(className)}>{title}</div>;
   }
@@ -72,7 +73,7 @@ export function DataTableColumnHeader<TData, TValue>({
               <ChevronDownIcon />
               Desc
             </DropdownMenuCheckboxItem>
-            {column.getIsSorted() && (
+            {column.getIsSorted() !== false && (
               <DropdownMenuItem
                 className='[&_svg]:text-muted-foreground pl-2'
                 onClick={() => column.clearSorting()}

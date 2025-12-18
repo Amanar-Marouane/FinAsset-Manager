@@ -1,8 +1,8 @@
 /**
  * Decodes HTML entities in a string (browser or Node-safe)
  */
-export const decodeHtmlEntities = (str: string) => {
-    if (!str || typeof str !== 'string') return str;
+export const decodeHtmlEntities = (str: unknown) : string => {
+    if (!str || typeof str !== 'string') return '';
 
     if (typeof document !== 'undefined') {
         const textarea = document.createElement('textarea');

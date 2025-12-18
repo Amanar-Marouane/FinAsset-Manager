@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { Upload, X } from "lucide-react";
 import React, { useContext, useRef, useState } from "react";
 import { Button } from "./button";
+import Image from 'next/image';
 
 type ImageUploadProps = {
     file: File | null;
@@ -24,7 +25,7 @@ export function ImageUpload({
     const inputRef = useRef<HTMLInputElement>(null);
     const [dragActive, setDragActive] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
-    const { showError } = useContext(AppContext);
+    const { showError } = useContext(AppContext) ?? { showError: () => { } };
 
     React.useEffect(() => {
         if (file) {
@@ -50,8 +51,8 @@ export function ImageUpload({
 
     const handleFiles = (files: FileList | null) => {
         if (!files || files.length === 0) return;
-        const selected = files[0];
-        if (validateFile(selected)) {
+        const selected = files[0] ?? null;
+        if (selected && validateFile(selected)) {
             onFileChange(selected);
         }
     };
@@ -97,12 +98,11 @@ export function ImageUpload({
             >
                 {preview ? (
                     <>
-                        <img
+                        <Image
                             src={preview}
                             alt="Preview"
                             className="object-cover w-full h-full rounded-full"
                         />
-                        {/* @ts-ignore */}
                         <Button
                             variant="ghost"
                             size="sm"

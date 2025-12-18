@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { PlusCircle, XCircle } from 'lucide-react';
+import { SafeString } from '@/utils/safe-string';
 
 interface Range {
   min: number;
@@ -40,7 +41,7 @@ interface DataTableSliderFilterProps<TData> {
 export function DataTableSliderFilter<TData>({
   column,
   title
-}: DataTableSliderFilterProps<TData>) {
+}: DataTableSliderFilterProps<TData>): React.JSX.Element {
   const id = React.useId();
 
   const columnFilterValue = getIsValidRange(column.getFilterValue())
@@ -154,7 +155,7 @@ export function DataTableSliderFilter<TData>({
               />
               {formatValue(columnFilterValue[0])} -{' '}
               {formatValue(columnFilterValue[1])}
-              {unit ? ` ${unit}` : ''}
+              {' ' + SafeString(unit, '')}
             </>
           ) : null}
         </Button>
@@ -182,9 +183,9 @@ export function DataTableSliderFilter<TData>({
                 max={max}
                 value={range[0]?.toString()}
                 onChange={onFromInputChange}
-                className={cn('h-8 w-24', unit && 'pr-8')}
+                className={cn('h-8 w-24', SafeString(unit, 'pr-8'))}
               />
-              {unit && (
+              {typeof unit !== "undefined" && (
                 <span className='bg-accent text-muted-foreground absolute top-0 right-0 bottom-0 flex items-center rounded-r-md px-2 text-sm'>
                   {unit}
                 </span>
@@ -207,9 +208,9 @@ export function DataTableSliderFilter<TData>({
                 max={max}
                 value={range[1]?.toString()}
                 onChange={onToInputChange}
-                className={cn('h-8 w-24', unit && 'pr-8')}
+                className={cn('h-8 w-24', SafeString(unit, 'pr-8'))}
               />
-              {unit && (
+              {typeof unit !== "undefined" && (
                 <span className='bg-accent text-muted-foreground absolute top-0 right-0 bottom-0 flex items-center rounded-r-md px-2 text-sm'>
                   {unit}
                 </span>

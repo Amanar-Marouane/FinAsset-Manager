@@ -37,9 +37,7 @@ const UrlInput: React.FC<UrlInputProps> = ({
         } else setCurrentUrl('');
 
         const urlInput = document.querySelector('.url-input') as HTMLInputElement;
-        if (urlInput) {
-            urlInput.value = '';
-        }
+        urlInput.value = '';
     };
 
     const removeUrl = (index: number): void => {

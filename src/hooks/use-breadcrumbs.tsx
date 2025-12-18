@@ -22,7 +22,7 @@ const routeMapping: Record<string, BreadcrumbItem[]> = {
   // Add more custom mappings as needed
 };
 
-export function useBreadcrumbs() {
+export function useBreadcrumbs(): BreadcrumbItem[] {
   const pathname = usePathname();
 
   const breadcrumbs = useMemo(() => {

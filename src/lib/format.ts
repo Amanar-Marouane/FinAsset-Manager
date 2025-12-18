@@ -1,8 +1,8 @@
 export function formatDate(
   date: Date | string | number | undefined,
   opts: Intl.DateTimeFormatOptions = {}
-) {
-  if (!date) return '';
+): string {
+  if (date == null) return '';
 
   try {
     return new Intl.DateTimeFormat('en-US', {
@@ -12,6 +12,7 @@ export function formatDate(
       ...opts
     }).format(new Date(date));
   } catch (_err) {
+    console.error('Error formatting date:', _err);
     return '';
   }
 }

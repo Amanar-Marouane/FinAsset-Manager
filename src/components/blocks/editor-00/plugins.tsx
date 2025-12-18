@@ -17,6 +17,7 @@ import { $setBlocksType } from "@lexical/selection"
 import { $getSelection, $isRangeSelection, FORMAT_ELEMENT_COMMAND, FORMAT_TEXT_COMMAND, TextFormatType, ElementFormatType } from "lexical"
 import { $createCodeNode, getDefaultCodeLanguage, getCodeLanguages, registerCodeHighlighting } from "@lexical/code"
 import { useCallback, useState, useEffect } from "react"
+import type { ReactElement } from "react"
 
 import { ContentEditable } from "@/components/editor/editor-ui/content-editable"
 import { Button } from "@/components/ui/button"
@@ -24,15 +25,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlignCenter, AlignLeft, AlignRight, Bold, Heading1, Heading2, Italic, Link2, Link2Off, List, ListOrdered, Quote, Underline, Code } from "lucide-react"
 
 // Enhanced URL matchers for better detection
-const URL_MATCHER = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g
+const URL_MATCHER = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_~#?&//=]*)/g
 const LOCALHOST_MATCHER = /https?:\/\/localhost(:[0-9]+)?(\/[^\s]*)?/g
 const IP_URL_MATCHER = /https?:\/\/(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(:[0-9]+)?(\/[^\s]*)?/g
-const WWW_MATCHER = /www\.[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g
+const WWW_MATCHER = /www\.[-a-zA-Z0-9@:%._~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_~#?&//=]*)/g
 const EMAIL_MATCHER = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+type Matcher = {
+  index: number,
+  length: number,
+  text: string,
+  url: string
+} | null;
 
 const MATCHERS = [
   // Match full HTTP/HTTPS URLs
-  (text: string) => {
+  (text: string): Matcher => {
     URL_MATCHER.lastIndex = 0; // Reset regex
     const match = URL_MATCHER.exec(text)
     if (match === null) {
@@ -47,7 +54,7 @@ const MATCHERS = [
     }
   },
   // Match localhost URLs
-  (text: string) => {
+  (text: string): Matcher => {
     LOCALHOST_MATCHER.lastIndex = 0; // Reset regex
     const match = LOCALHOST_MATCHER.exec(text)
     if (match === null) {
@@ -62,7 +69,7 @@ const MATCHERS = [
     }
   },
   // Match IP-based URLs
-  (text: string) => {
+  (text: string): Matcher => {
     IP_URL_MATCHER.lastIndex = 0; // Reset regex
     const match = IP_URL_MATCHER.exec(text)
     if (match === null) {
@@ -77,7 +84,7 @@ const MATCHERS = [
     }
   },
   // Match www URLs and add https
-  (text: string) => {
+  (text: string): Matcher => {
     WWW_MATCHER.lastIndex = 0; // Reset regex
     const match = WWW_MATCHER.exec(text)
     if (match === null) {
@@ -92,7 +99,7 @@ const MATCHERS = [
     }
   },
   // Match email addresses
-  (text: string) => {
+  (text: string): Matcher => {
     EMAIL_MATCHER.lastIndex = 0; // Reset regex
     const match = EMAIL_MATCHER.exec(text)
     if (match === null) {
@@ -108,23 +115,23 @@ const MATCHERS = [
   },
 ]
 
-function ToolbarPlugin() {
+function ToolbarPlugin(): ReactElement {
   const [editor] = useLexicalComposerContext()
-  const [isLink, setIsLink] = useState(false)
+  const [isLink] = useState(false)
   const [showLinkInput, setShowLinkInput] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [showCodeLanguageSelect, setShowCodeLanguageSelect] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState(getDefaultCodeLanguage())
 
-  const formatText = (format: TextFormatType) => {
+  const formatText = (format: TextFormatType): void => {
     editor.dispatchCommand(FORMAT_TEXT_COMMAND, format)
   }
 
-  const formatElement = (format: ElementFormatType) => {
+  const formatElement = (format: ElementFormatType): void => {
     editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, format)
   }
 
-  const formatHeading = (headingSize: HeadingTagType) => {
+  const formatHeading = (headingSize: HeadingTagType): void => {
     editor.update(() => {
       const selection = $getSelection()
       if ($isRangeSelection(selection)) {
@@ -133,7 +140,7 @@ function ToolbarPlugin() {
     })
   }
 
-  const formatQuote = () => {
+  const formatQuote = (): void => {
     editor.update(() => {
       const selection = $getSelection()
       if ($isRangeSelection(selection)) {
@@ -142,7 +149,7 @@ function ToolbarPlugin() {
     })
   }
 
-  const formatList = (listType: string) => {
+  const formatList = (listType: string): void => {
     if (listType === 'bullet') {
       editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
     } else {
@@ -150,7 +157,7 @@ function ToolbarPlugin() {
     }
   }
 
-  const insertLink = useCallback(() => {
+  const insertLink = useCallback((): void => {
     if (!isLink) {
       setShowLinkInput(true)
     } else {
@@ -158,7 +165,7 @@ function ToolbarPlugin() {
     }
   }, [editor, isLink])
 
-  const handleLinkSubmit = () => {
+  const handleLinkSubmit = (): void => {
     if (linkUrl !== '') {
       editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl)
       setLinkUrl('')
@@ -166,12 +173,12 @@ function ToolbarPlugin() {
     }
   }
 
-  const handleLinkCancel = () => {
+  const handleLinkCancel = (): void => {
     setLinkUrl('')
     setShowLinkInput(false)
   }
 
-  const formatCodeBlock = () => {
+  const formatCodeBlock = (): void => {
     // Immediately create a code block with the default language
     editor.update(() => {
       const selection = $getSelection()
@@ -186,7 +193,7 @@ function ToolbarPlugin() {
     setShowCodeLanguageSelect(true)
   }
 
-  const insertCodeBlock = (language: string) => {
+  const insertCodeBlock = (language: string): void => {
     editor.update(() => {
       const selection = $getSelection()
       if ($isRangeSelection(selection)) {
@@ -199,7 +206,7 @@ function ToolbarPlugin() {
     setShowCodeLanguageSelect(false)
   }
 
-  const handleCodeLanguageSelect = (language: string) => {
+  const handleCodeLanguageSelect = (language: string): void => {
     setSelectedLanguage(language)
     insertCodeBlock(language)
   }
@@ -318,7 +325,7 @@ function ToolbarPlugin() {
   )
 }
 
-export function Plugins({ placeholder = "Commencez à taper..." }: { placeholder?: string }) {
+export function Plugins({ placeholder = "Commencez à taper..." }: { placeholder?: string }): ReactElement {
   const [editor] = useLexicalComposerContext()
 
   useEffect(() => {

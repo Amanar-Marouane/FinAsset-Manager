@@ -1,28 +1,8 @@
+import React from 'react';
 import { Separator } from '../ui/separator';
 import { SidebarTrigger } from '../ui/sidebar';
 import { UserNav } from './user-nav';
-
-/**
- * General Application Header Component
- *
- * Usage Examples:
- *
- * 1. Basic header with breadcrumbs:
- * <Header>
- *   <BreadcrumbNav />
- * </Header>
- *
- * 2. Header with custom left content:
- * <Header
- *   leftContent={<SearchBar />}
- *   showSidebar={false}
- * />
- *
- * 3. Header with custom user menu:
- * <Header
- *   rightContent={<CustomUserMenu />}
- * />
- */
+import { useAppContext } from '@/hooks/use-app-context';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -49,6 +29,7 @@ export default function Header({
       <span className='text-foreground'>Current Page</span>
     </nav>
   );
+  const { user, logout } = useAppContext();
 
   return (
     <header
@@ -63,7 +44,7 @@ export default function Header({
       </div>
 
       <div className='flex items-center gap-2 px-4'>
-        {rightContent || <UserNav />}
+        {rightContent || <UserNav user={user} logout={logout} />}
       </div>
     </header>
   );

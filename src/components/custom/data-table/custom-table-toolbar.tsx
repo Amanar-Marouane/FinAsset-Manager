@@ -15,26 +15,26 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { CalendarIcon, Check, Settings2, X } from 'lucide-react';
-import * as React from 'react';
+import React from 'react';
 import { useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
-interface CustomTableToolbarProps<TData extends Record<string, any>>
+interface CustomTableToolbarProps<TData extends Record<string, unknown>>
   extends React.ComponentProps<'div'> {
   table: UseCustomTableReturnType<TData>;
   filters?: CustomTableFilterConfig[];
 }
 
-export function CustomTableToolbar<TData extends Record<string, any>>({
+export function CustomTableToolbar<TData extends Record<string, unknown>>({
   table,
   filters = [],
   className,
   ...props
-}: CustomTableToolbarProps<TData>) {
+}: CustomTableToolbarProps<TData>): React.JSX.Element {
 
   const defaultValues = useMemo(() => {
-    return filters.reduce<Record<string, any>>((acc, filter) => {
+    return filters.reduce<Record<string, unknown>>((acc, filter) => {
       acc[filter.field] = filter.defaultValue ?? (filter.type === 'datatable-multiselect' ? [] : '');
       return acc;
     }, {});
@@ -86,13 +86,13 @@ export function CustomTableToolbar<TData extends Record<string, any>>({
     table.onFilter(values);
   });
 
-  const handleResetFilters = () => {
+  const handleResetFilters = (): void => {
     reset(defaultValues);
     table.onFilter({});
   };
 
   const isFiltered = useMemo(() => {
-    return Object.values(table.filters || {}).some(
+    return Object.values(table.filters).some(
       (v) => {
         if (Array.isArray(v)) {
           return v.length > 0;
@@ -184,7 +184,7 @@ export function CustomTableToolbar<TData extends Record<string, any>>({
             render={({ field }) => (
               <div className="relative space-x-4">
                 <DateTimePicker
-                  date={field.value ? new Date(field.value) : undefined}
+                  date={field.value ? new Date(field.value) : new Date()}
                   setDate={(date) => {
                     if (date instanceof Date && !isNaN(date.getTime())) {
                       field.onChange(date.toLocaleString('sv-SE'));
@@ -218,79 +218,83 @@ export function CustomTableToolbar<TData extends Record<string, any>>({
               control={control}
               name={name}
               render={({ field }) => {
-                // Check if current value exists in options
-                const currentOption = filter.options?.find((option) => String(option.value) === field.value);
-                const isValidValue = field.value && field.value !== "null" && currentOption;
+                // Create a component wrapper to properly use React hooks
+                const SelectFilter = () => {
+                  const currentOption = filter.options?.find((option) => String(option.value) === field.value);
+                  const isValidValue = field.value && field.value !== "null" && currentOption;
 
-                // If value is invalid, reset to null
-                React.useEffect(() => {
-                  if (field.value && field.value !== "null" && !currentOption) {
-                    field.onChange(null);
-                    filter.onChange?.(null, methods);
-                  }
-                }, [field.value, currentOption, field, filter, methods]);
+                  // Now useEffect is at the top level of a component
+                  React.useEffect(() => {
+                    if (field.value && field.value !== "null" && !currentOption) {
+                      field.onChange(null);
+                      filter.onChange?.(null, methods);
+                    }
+                  }, [field.value, currentOption]);
 
-                return (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                          "justify-between",
-                          !isValidValue && "text-muted-foreground"
-                        )}
-                      >
-                        {isValidValue
-                          ? currentOption?.label
-                          : filter.label}
-                        <Settings2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput placeholder={`Rechercher ${(filter.label || '').toLowerCase()}...`} />
-                        <CommandList>
-                          <CommandEmpty>Aucune option trouvée.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              onSelect={() => {
-                                field.onChange(null);
-                                filter.onChange?.(null, methods);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  (!field.value || field.value === "null") ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              Tous
-                            </CommandItem>
-                            {filter.options?.map((option) => (
+                  return (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "justify-between",
+                            !isValidValue && "text-muted-foreground"
+                          )}
+                        >
+                          {isValidValue
+                            ? currentOption?.label
+                            : filter.label}
+                          <Settings2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput placeholder={`Rechercher ${(filter.label || '').toLowerCase()}...`} />
+                          <CommandList>
+                            <CommandEmpty>Aucune option trouvée.</CommandEmpty>
+                            <CommandGroup>
                               <CommandItem
-                                key={option.value}
                                 onSelect={() => {
-                                  const value = String(option.value);
-                                  field.onChange(value);
-                                  filter.onChange?.(value, methods);
+                                  field.onChange(null);
+                                  filter.onChange?.(null, methods);
                                 }}
                               >
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    field.value === String(option.value) ? "opacity-100" : "opacity-0"
+                                    (!field.value || field.value === "null") ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {option.label}
+                                Tous
                               </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                );
+                              {filter.options?.map((option) => (
+                                <CommandItem
+                                  key={option.value}
+                                  onSelect={() => {
+                                    const value = String(option.value);
+                                    field.onChange(value);
+                                    filter.onChange?.(value, methods);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === String(option.value) ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {option.label}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  );
+                };
+
+                return <SelectFilter />;
               }}
             />
           )
@@ -330,7 +334,7 @@ export function CustomTableToolbar<TData extends Record<string, any>>({
                 return filter.component({
                   control,
                   field,
-                  onChange: (value: any) => {
+                  onChange: (value: unknown) => {
                     field.onChange(value);
                     filter.onChange?.(value, methods);
                   },

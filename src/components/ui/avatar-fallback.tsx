@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
-const CustomAvatarFallback = ({ name, className = "h-8 w-8" }) => {
-    const getInitials = (name) => {
+const CustomAvatarFallback = ({ name, className = "h-8 w-8" }: { name: string; className?: string }) => {
+    const getInitials = (name: string) => {
         if (!name) return 'UN';
         return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     };

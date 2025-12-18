@@ -1,4 +1,5 @@
 'use client';
+import { Icons } from '@/components/icons';
 import {
   Collapsible,
   CollapsibleContent,
@@ -25,93 +26,24 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
+import { navItems } from '@/constants/data';
+import { User } from '@/contexts/AppProvider';
+import { NavItem } from '@/types';
 import {
   IconChevronRight,
-  IconChevronsDown,
-  IconHome,
-  IconUsers,
-  IconSettings,
-  IconFiles,
-  IconTicket,
-  IconCalendar
+  IconChevronsDown
 } from '@tabler/icons-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import * as React from 'react';
 import { UserDropdownMenu } from './user-dropdown-menu';
-
-/**
- * General Application Sidebar Component
- * 
- * Usage Examples:
- * 
- * 1. Basic sidebar with default menu:
- * <AppSidebar />
- * 
- * 2. Custom menu items:
- * <AppSidebar
- *   menuItems={customMenuItems}
- *   user={currentUser}
- * />
- */
-
-// Default fallback menu items
-const defaultMenuItems = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: 'home',
-  },
-  {
-    title: 'Users',
-    url: '/users',
-    icon: 'users',
-    items: [
-      { title: 'All Users', url: '/users' },
-      { title: 'Add User', url: '/users/create' },
-      { title: 'User Roles', url: '/users/roles' },
-    ]
-  },
-  {
-    title: 'Projects',
-    url: '/projects',
-    icon: 'files',
-    items: [
-      { title: 'All Projects', url: '/projects' },
-      { title: 'Create Project', url: '/projects/create' },
-    ]
-  },
-  {
-    title: 'Tasks',
-    url: '/tasks',
-    icon: 'ticket',
-  },
-  {
-    title: 'Calendar',
-    url: '/calendar',
-    icon: 'calendar',
-  },
-  {
-    title: 'Settings',
-    url: '/settings',
-    icon: 'settings',
-  }
-];
+import { useAppContext } from '@/hooks/use-app-context';
 
 // Icon mapping
-const iconMap = {
-  home: IconHome,
-  users: IconUsers,
-  settings: IconSettings,
-  files: IconFiles,
-  ticket: IconTicket,
-  calendar: IconCalendar,
-};
+const iconMap = Icons;
 
 interface AppSidebarProps {
-  menuItems?: any[];
-  user?: any;
+  menuItems?: NavItem[];
   permissions?: string[];
   hasPermissionFn?: (permissions: string[], permission: string) => boolean;
   logoSrc?: string;
@@ -121,8 +53,7 @@ interface AppSidebarProps {
 }
 
 export default function AppSidebar({
-  menuItems = defaultMenuItems,
-  user = { name: 'John Doe', email: 'john.doe@example.com' },
+  menuItems = navItems,
   permissions = [],
   hasPermissionFn = () => true,
   logoSrc = "/logo.png",
@@ -131,20 +62,27 @@ export default function AppSidebar({
   className = ""
 }: AppSidebarProps) {
   const pathname = usePathname();
+  const { user, logout } = useAppContext();
 
-  const UserAvatarProfile = ({ user, className = "", showInfo = false }) => (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-sm font-semibold">
+  const UserAvatarProfile = ({ user = null, className = "", showInfo = false }: { user: User | null, className: string, showInfo: boolean }) => (
+    <div className={`flex items-center gap-2 w-full ${className}`}>
+      <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center text-secondary-foreground text-sm font-semibold">
         {user?.avatar ? (
-          <img src={user.avatar} alt={user.name} className="w-full h-full rounded-lg object-cover" />
+          <Image
+            src={user.avatar}
+            alt={user.name}
+            width={32}
+            height={32}
+            className="w-full h-full rounded-full object-cover"
+          />
         ) : (
           user?.name?.charAt(0)?.toUpperCase() || "U"
         )}
       </div>
       {showInfo && (
-        <div className="text-left text-sm">
+        <div className="text-left text-sm w-full">
           <div className="font-semibold">{user?.name || "User"}</div>
-          <div className="text-xs text-muted-foreground">{user?.email || "user@example.com"}</div>
+          <div className="text-xs text-muted-foreground">{user?.email || "Loading..."}</div>
         </div>
       )}
     </div>
@@ -175,12 +113,14 @@ export default function AppSidebar({
                 return null;
               }
 
-              const Icon = iconMap[item.icon] || IconHome;
+              const Icon = (item.icon && item.icon in iconMap)
+                ? iconMap[item.icon as keyof typeof iconMap]
+                : Icons.dashboard;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  defaultOpen={item.isActive || false}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
@@ -190,7 +130,7 @@ export default function AppSidebar({
                         isActive={pathname === item.url}
                         className="py-3 text-xl font-semibold text-sidebar-foreground hover:bg-sidebar-accent"
                       >
-                        {item.icon && <Icon className="text-sidebar-foreground" size={24} />}
+                        {item.icon && <Icon fontSize={24} className="text-sidebar-foreground" />}
                         <span className="text-sidebar-foreground">{item.title}</span>
                         <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 h-6 w-6 text-sidebar-foreground' />
                       </SidebarMenuButton>
@@ -202,7 +142,7 @@ export default function AppSidebar({
                             <SidebarMenuSubButton
                               asChild
                               isActive={pathname === subItem.url}
-                              className="py-2.5 text-base text-sidebar-foreground/80 hover:bg-primary"
+                              className="py-2.5 text-base text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                             >
                               <Link href={subItem.url}>
                                 <span className="text-sidebar-foreground">{subItem.title}</span>
@@ -220,10 +160,10 @@ export default function AppSidebar({
                     asChild
                     tooltip={item.title}
                     isActive={pathname === item.url}
-                    className="py-4 text-lg font-semibold text-sidebar-foreground hover:bg-primary"
+                    className="py-4 text-lg font-semibold text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   >
                     <Link href={item.url}>
-                      <Icon className="h-6 w-6 text-sidebar-foreground" />
+                      <Icon fontSize={24} className="text-sidebar-foreground" />
                       <span className="text-sidebar-foreground">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -244,7 +184,7 @@ export default function AppSidebar({
                   className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
                 >
                   <UserAvatarProfile
-                    className='h-8 w-8 rounded-lg'
+                    className='h-8 w-8 rounded-full'
                     showInfo
                     user={user}
                   />
@@ -252,7 +192,7 @@ export default function AppSidebar({
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg card-bg border-border'
+                className="bg-card text-card-foreground border border-border"
                 side='bottom'
                 align='end'
                 sideOffset={4}
@@ -260,14 +200,14 @@ export default function AppSidebar({
                 <DropdownMenuLabel className='p-0 font-normal'>
                   <div className='px-1 py-1.5'>
                     <UserAvatarProfile
-                      className='h-8 w-8 rounded-lg'
+                      className='h-8 w-8 rounded-full'
                       showInfo
                       user={user}
                     />
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="border-border" />
-                <UserDropdownMenu signOutClassName='w-full' />
+                <UserDropdownMenu signOutClassName='w-full' onSignOut={() => logout()} />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>

@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 
 import { nodes } from "./nodes"
 import { Plugins } from "./plugins"
+import React, { JSX } from "react"
 
 const editorConfig: InitialConfigType = {
   namespace: "Editor",
@@ -36,7 +37,7 @@ export function Editor({
   onChange,
   onSerializedChange,
   placeholder = "Start typing...",
-}: EditorProps) {
+}: EditorProps): JSX.Element {
   return (
     <div className="bg-background overflow-hidden rounded-lg border shadow h-full flex flex-col">
       <LexicalComposer

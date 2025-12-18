@@ -1,0 +1,69 @@
+.dark {
+    /* =========================
+     Brand / Primary (Luxury Navy)
+     ========================= */
+    --primary: oklch(0.48 0.14 260);
+    /* Elevated navy for dark */
+    --primary-bold: oklch(0.52 0.16 260);
+    --primary-80: color-mix(in srgb, var(--primary), transparent 20%);
+    --primary-bold-80: color-mix(in srgb, var(--primary-bold), transparent 20%);
+    --primary-foreground: #ffffff;
+
+    /* =========================
+     Sidebar (Deep Dark Blue - User Requested)
+     ========================= */
+    --sidebar: #020817;
+    /* hsl(222.2 84% 4.9%) */
+    --sidebar-foreground: #F8FAFC;
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1e293b;
+    --sidebar-accent-foreground: #F8FAFC;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: #3b82f6;
+
+    /* =========================
+     Inputs / Borders (User Requested)
+     ========================= */
+    --border: hsl(217.2 32.6% 17.5%);
+    --input: hsl(217.2 32.6% 17.5%);
+    --ring: hsl(224.3 76.3% 48%);
+
+    /* =========================
+     Base Layout
+     ========================= */
+    --background: #020817;
+    /* Matching Sidebar for Luxury Dark */
+    --foreground: hsl(210 40% 98%);
+
+    --card: #0b1120;
+    /* Slightly lighter than background */
+    --card-foreground: hsl(210 40% 98%);
+    --card-bg: #0b1120;
+
+    --popover: #0b1120;
+    --popover-foreground: hsl(210 40% 98%);
+
+    --primary: hsl(210 40% 98%);
+    --primary-foreground: hsl(222.2 47.4% 11.2%);
+    --primary-bold: #ffffff;
+
+    --secondary: hsl(217.2 32.6% 17.5%);
+    --secondary-foreground: hsl(210 40% 98%);
+
+    --muted: hsl(217.2 32.6% 17.5%);
+    --muted-foreground: hsl(215 20.2% 65.1%);
+
+    --accent: hsl(217.2 32.6% 17.5%);
+    --accent-foreground: hsl(210 40% 98%);
+
+    --destructive: hsl(0 62.8% 30.6%);
+    --destructive-foreground: hsl(210 40% 98%);
+
+    /* Chart Colors - Luxury Pallete */
+    --chart-1: hsl(220 70% 50%);
+    --chart-2: hsl(160 60% 45%);
+    --chart-3: hsl(30 80% 55%);
+    --chart-4: hsl(280 65% 60%);
+    --chart-5: hsl(340 75% 55%);
+}

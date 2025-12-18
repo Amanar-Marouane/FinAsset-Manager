@@ -12,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { AlertTriangle, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 /**
  * General Delete Confirmation Modal
@@ -97,8 +97,19 @@ const DeleteModal = ({
             showToast(`${itemName} deleted successfully`, 'success');
             setOpen(false);
             onSuccess?.();
-        } catch (error: any) {
-            const errorMessage = error?.message || error?.response?.data?.message || 'Failed to delete item';
+        } catch (error: unknown) {
+            const getMessageFromUnknown = (err: unknown): string => {
+                if (typeof err === 'string') return err;
+                if (err instanceof Error) return err.message;
+                if (typeof err === 'object' && err !== null) {
+                    const maybe = err as { response?: { data?: { message?: unknown } } };
+                    const msg = maybe.response?.data?.message;
+                    if (typeof msg === 'string') return msg;
+                }
+                return 'Failed to delete item';
+            };
+
+            const errorMessage = getMessageFromUnknown(error);
             showToast(errorMessage, 'error');
             onError?.(errorMessage);
         } finally {
@@ -162,7 +173,7 @@ const DeleteModal = ({
                     <AlertDialogDescription className="text-sm text-muted-foreground mt-4">
                         Are you sure you want to delete this {itemName.toLowerCase()} with identifier{" "}
                         <span className="font-semibold text-foreground text-truncate">
-                            "{reference && reference.length > 0 ? reference : id}"
+                            &quot;{reference && reference.length > 0 ? reference : id}&quot;
                         </span>
                         ? This action is irreversible and will permanently delete all {itemName.toLowerCase()} data.
                     </AlertDialogDescription>

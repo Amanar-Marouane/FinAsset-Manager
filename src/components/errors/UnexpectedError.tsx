@@ -1,14 +1,7 @@
 'use client';
-import { AlertTriangle, ServerCrash, FileX, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import { APP_ROUTES } from '@/constants/app-routes';
-
-
-interface Error {
-    status?: number;
-    message?: string;
-}
+import { ApiError } from '@/hooks/use-api';
+import { AlertTriangle, Clock, FileX, ServerCrash, Shield } from 'lucide-react';
 
 const getErrorConfig = (errorCode: number) => {
     switch (errorCode) {
@@ -99,10 +92,9 @@ const getErrorConfig = (errorCode: number) => {
     }
 };
 
-export default function UnexpectedError({ error }: { error?: Error }) {
-    const router = useRouter();
+export default function UnexpectedError({ error = null}: { error: ApiError | null }) {
     const errorCode = error?.status;
-    const config = getErrorConfig(errorCode);
+    const config = getErrorConfig(errorCode || 0);
     const IconComponent = config.icon;
 
     const handleRefresh = () => {
@@ -122,7 +114,7 @@ export default function UnexpectedError({ error }: { error?: Error }) {
                     {config.message}
                     {errorCode && (
                         <span className="block mt-2 text-sm">
-                            Code d'erreur : {errorCode}
+                            Code d&apos;erreur : {errorCode}
                         </span>
                     )}
                 </p>

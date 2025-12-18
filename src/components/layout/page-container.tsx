@@ -47,10 +47,10 @@ export default function PageContainer({
     <>
       {scrollable ? (
         <ScrollArea className={`${height} ${className}`}>
-          <div className={`flex flex-1 ${padding}`}>{children}</div>
+          <div className={`flex flex-1 flex-col w-full ${padding}`}>{children}</div>
         </ScrollArea>
       ) : (
-        <div className={`flex flex-1 ${padding} ${height} ${className}`}>{children}</div>
+        <div className={`flex flex-1 flex-col w-full ${padding} ${height} ${className}`}>{children}</div>
       )}
     </>
   );

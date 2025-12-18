@@ -1,7 +1,32 @@
+const PROTECTED_PREFIX = `/protected`; // Protected routes prefix
+
 export const APP_ROUTES = {
-    // Auth routes
     signIn: `/sign-in`,
-    signUp: `/sign-up`,
     forgotPassword: `/forgot-password`,
-    resetPassword: `/reset-password`,
+
+    // Dashboard
+    dashboard: `${PROTECTED_PREFIX}`,
+
+    // Protected module routes (list view)
+    comptesBancaires: {
+        index: `${PROTECTED_PREFIX}/comptes-bancaires`,
+    },
+    voitures: {
+        index: `${PROTECTED_PREFIX}/voitures`,
+    },
+    batiments: {
+        index: `${PROTECTED_PREFIX}/batiments`,
+    },
+    projets: {
+        index: `${PROTECTED_PREFIX}/projets`,
+    },
+    credits: {
+        index: `${PROTECTED_PREFIX}/credits`,
+    },
+    prets: {
+        index: `${PROTECTED_PREFIX}/prets`,
+    },
+    terrains: {
+        index: `${PROTECTED_PREFIX}/terrains`,
+    },
 };

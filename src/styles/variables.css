@@ -1,0 +1,10 @@
+:root {
+    /* Layout */
+    --font-sans: var(--font-inter);
+    --header-height: calc(var(--spacing) * 12 + 1px);
+    --radius: 0.625rem;
+
+    /* Brand colors - Luxury Dark Blue Theme */
+    --main-light: #1E40AF; /* Royal Blue */
+    --main-bold: #0F172A; /* Deep Navy */
+}

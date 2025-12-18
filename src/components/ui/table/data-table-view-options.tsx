@@ -27,7 +27,7 @@ interface DataTableViewOptionsProps<TData> {
 
 export function DataTableViewOptions<TData>({
   table
-}: DataTableViewOptionsProps<TData>) {
+}: DataTableViewOptionsProps<TData>): React.JSX.Element {
   const columns = React.useMemo(
     () =>
       table

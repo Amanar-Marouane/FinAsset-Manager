@@ -1,4 +1,8 @@
-export default function LoadingView() {
+"use client";
+
+import React from 'react';
+
+export default function LoadingView(): React.JSX.Element {
   return (
     <div className='flex h-[110vh] items-center justify-center bg-gradient-to-br from-background to-secondary/20'>
       <div className='flex flex-col items-center space-y-6'>

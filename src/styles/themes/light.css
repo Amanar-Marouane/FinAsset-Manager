@@ -1,0 +1,74 @@
+:root {
+    /* =========================
+     Brand / Primary (Luxury Navy)
+     ========================= */
+    --primary: #020817;
+    /* Deep Navy to match sidebar logic */
+    --primary-foreground: #ffffff;
+    --primary-bold: #0f172a;
+
+    /* =========================
+     Sidebar (Deep Dark Blue - Kept as requested)
+     ========================= */
+    --sidebar: #020817;
+    /* Deep Dark Blue */
+    --sidebar-foreground: #F8FAFC;
+    /* Light text for sidebar */
+    --sidebar-primary: #3b82f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #1e293b;
+    --sidebar-accent-foreground: #F8FAFC;
+    --sidebar-border: #1e293b;
+    --sidebar-ring: #3b82f6;
+
+    /* =========================
+     Base Layout (Light Mode Content)
+     ========================= */
+    --background: #ffffff;
+    /* User requested Light BG */
+    --foreground: #020817;
+    /* Dark Text for readability on White BG */
+
+    --card: #ffffff;
+    --card-foreground: #020817;
+
+    --popover: #ffffff;
+    --popover-foreground: #020817;
+
+    --secondary: #f1f5f9;
+    /* Slate 100 */
+    --secondary-foreground: #0f172a;
+
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    /* Slate 500 */
+
+    --accent: #f1f5f9;
+    --accent-foreground: #0f172a;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+
+    /* =========================
+     Inputs / Borders (Light Mode)
+     ========================= */
+    --border: #e2e8f0;
+    /* Slate 200 */
+    --input: #e2e8f0;
+    --ring: #020817;
+    /* Focus ring matches primary/sidebar */
+
+    /* =========================
+     Charts
+     ========================= */
+    --chart-1: #020817;
+    /* Navy */
+    --chart-2: #3b82f6;
+    /* Blue */
+    --chart-3: #f59e0b;
+    /* Amber */
+    --chart-4: #10b981;
+    /* Emerald */
+    --chart-5: #6366f1;
+    /* Indigo */
+}

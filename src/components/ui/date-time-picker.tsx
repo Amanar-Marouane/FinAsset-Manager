@@ -27,6 +27,13 @@ export function DateTimePicker({
     granularity = "minute",
     placeholder = "Sélectionner une date et une heure",
     ...props
+}: {
+    date: string | number | Date
+    setDate: (date: Date | null) => void
+    granularity?: "minute" | "5minutes" | "15minutes"
+    placeholder?: string
+    children?: React.ReactNode
+    [key: string]: unknown
 }) {
     const minuteRef = React.useRef(null)
     const hourRef = React.useRef(null)
@@ -61,35 +68,32 @@ export function DateTimePicker({
     }
 
     // Handle time changes
-    const handleHourChange = (newHour) => {
+    const handleHourChange = (newHour: string) => {
         const newDate = date ? new Date(date) : new Date()
         newDate.setHours(parseInt(newHour))
         setDate(newDate)
     }
 
-    const handleMinuteChange = (newMinute) => {
+    const handleMinuteChange = (newMinute: string) => {
         const newDate = date ? new Date(date) : new Date()
         newDate.setMinutes(parseInt(newMinute))
         setDate(newDate)
     }
 
     // Handle date selection
-    const handleSelect = (newDate) => {
+    const handleSelect = (newDate: Date | undefined) => {
         const currentDate = date ? new Date(date) : new Date()
-
         // Keep the current time when selecting a new date
         if (newDate) {
             newDate.setHours(currentDate.getHours(), currentDate.getMinutes())
         }
-
-        setDate(newDate)
+        setDate(newDate ?? null)
     }
 
     return (
         <Popover>
             <PopoverTrigger asChild>
                 {props.children || (
-                    //@ts-ignore
                     <Button
                         variant="outline"
                         className={cn(
@@ -117,11 +121,11 @@ export function DateTimePicker({
                     <TabsContent value="date" className="p-0">
                         <Calendar
                             mode="single"
-                            selected={date}
+                            selected={new Date(date)}
                             onSelect={handleSelect}
-                            initialFocus
                             captionLayout="dropdown"
                             showOutsideDays={true}
+                            required={false}
                         />
                     </TabsContent>
                     <TabsContent value="time" className="p-4 pt-2">
@@ -191,7 +195,6 @@ export function DateTimePicker({
                             </div>
                         </div>
                         <div className="flex justify-center mt-4">
-                            {/*//@ts-ignore*/}
                             <Button
                                 variant="default"
                                 size="sm"

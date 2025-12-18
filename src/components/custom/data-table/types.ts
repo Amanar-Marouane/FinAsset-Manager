@@ -1,20 +1,21 @@
-import React from 'react';
-import { FieldValues } from 'react-hook-form';
+import React, { ReactNode } from 'react';
+import { Control, FieldValues } from 'react-hook-form';
 
 export interface CustomTableFilterConfig {
   field: string;
   label: string;
   type: 'text' | 'number' | 'date' | 'datetime' | 'select' | 'checkbox' | 'datatable-select' | 'datatable-multiselect' | 'custom';
-  options?: Array<{ value: any; label: string }>;
-  defaultValue?: any;
-  onChange?: (value: any, form?: any) => void;
-  render?: (form: any) => React.ReactNode;
+  // option values used in UI as keys/sets — constrain to string | number
+  options?: Array<{ value: string | number; label: string }>;
+  defaultValue?: unknown;
+  onChange?: (value: unknown, form?: unknown) => void;
+  render?: (form: unknown) => React.ReactNode;
   component?: (props: {
-    control: any;
-    field: any;
-    onChange: (value: any) => void;
-    value: any;
-    form: any;
+    control: Control;
+    field: FieldValues;
+    onChange: (value: unknown) => void;
+    value: unknown;
+    form: unknown;
   }) => React.ReactNode;
 }
 
@@ -22,7 +23,7 @@ export interface CustomTableColumn<T> {
   data: keyof T | string;
   label: string;
   sortable: boolean;
-  render?: (value: any, row: T, refresh: () => void) => React.ReactNode;
+  render?: (value: unknown, row: T, refresh: () => Promise<void>) => ReactNode;
   width?: number;
 }
 
@@ -30,7 +31,8 @@ export interface CustomTableBulkAction<T> {
   label: string;
   icon: React.ReactNode;
   className?: string;
-  action: (selected: T[], refresh: () => void) => void;
+  // action may call an async refresh
+  action: (selected: T[], refresh: () => Promise<void>) => void | Promise<void>;
   disabled?: (selected: T[]) => boolean;
 }
 
@@ -47,7 +49,7 @@ export interface ToolbarAction {
 export interface ExternalAction<T> {
   label: string;
   icon: string;
-  onClick: (row: T, refresh: () => void) => void;
+  onClick: (row: T, refresh: () => Promise<void>) => void | Promise<void>;
   disabled?: (row: T) => boolean;
   color?: string;
   showOnSelected?: boolean;
@@ -65,13 +67,13 @@ export interface CustomTableTableState<T> {
   sortBy: keyof T | null;
   sortDir: 'asc' | 'desc';
   selectedRows: T[];
-  visibleColumns: (keyof T)[];
-  filters: Record<string, any>;
+  visibleColumns: (keyof T | string)[];
+  filters: Record<string, unknown>;
 }
 
 export interface CustomTableProps<T> {
   url: string;
-  preFilled?: { [key: string]: any };
+  preFilled?: Record<string, unknown>;
   columns: CustomTableColumn<T>[];
   bulkActions?: CustomTableBulkAction<T>[];
   toolbarActions?: ToolbarAction[];
@@ -79,19 +81,9 @@ export interface CustomTableProps<T> {
   initialState?: Partial<CustomTableTableState<T>>;
   title?: string;
   titleExtra?: React.ReactNode;
-  onInit?: (tableInstance: Partial<UseTableReturn<T>> & {
-    setSelectedRows: <T>(rows: T[]) => void;
-    onSort: <T>(column: keyof T) => void;
-    setData: <T>(data: T[]) => void;
-    setVisibleColumns: <T>(columns: (keyof T)[]) => void;
-    setFilters: (filters: Record<string, any>) => void;
-    setCurrentPage: (page: number) => void;
-    refresh: () => void;
-    setRowsPerPage: (rowsPerPage: number) => void;
-    onSelect: <T>(event: React.ChangeEvent<HTMLInputElement>, row: T) => void
-  }) => void;
+  onInit?: (tableInstance: UseCustomTableReturnType<T>) => void;
   onReset?: () => void;
-  onSubmit?: (values: any) => void;
+  onSubmit?: (values: unknown) => void;
   filters?: CustomTableFilterConfig[];
   sortBy?: keyof T;
   sortDir?: 'asc' | 'desc';
@@ -100,15 +92,15 @@ export interface CustomTableProps<T> {
 export interface UseTableReturn<T> extends CustomTableTableState<T> {
   setCurrentPage: (page: number) => void;
   setRowsPerPage: (rowsPerPage: number) => void;
-  setVisibleColumns: (columns: (keyof T)[]) => void;
-  setFilters: (filters: Record<string, any>) => void;
+  setVisibleColumns: (columns: (keyof T | string)[]) => void;
+  setFilters: (filters: Record<string, unknown>) => void;
   onSort: (column: keyof T) => void;
   onSelect: (event: React.ChangeEvent<HTMLInputElement>, row: T) => void;
   onSelectAll: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  refresh: () => void;
+  refresh: () => Promise<void>;
 }
 
-export type UseCustomTableReturnType<T extends Record<string, any>> = {
+export type UseCustomTableReturnType<T> = {
   data: T[];
   loading: boolean;
   error: string | null;
@@ -119,16 +111,16 @@ export type UseCustomTableReturnType<T extends Record<string, any>> = {
   sortBy: keyof T | null;
   sortDir: 'asc' | 'desc';
   selectedRows: T[];
-  visibleColumns: (keyof T)[];
-  filters: Record<string, any>;
+  visibleColumns: (keyof T | string)[];
+  filters: Record<string, unknown>;
   columns: CustomTableColumn<T>[];
   bulkActions: CustomTableBulkAction<T>[];
   setCurrentPage: (page: number) => void;
   setRowsPerPage: (rowsPerPage: number) => void;
-  onCheckboxChange: (event: React.ChangeEvent<HTMLInputElement>, row: T) => void;
-  onSelectAllRows: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onCheckboxChange: (event: React.ChangeEvent<HTMLInputElement> | { target: { checked: boolean } }, row: T) => void;
+  onSelectAllRows: (event: React.ChangeEvent<HTMLInputElement> | { target: { checked: boolean } }) => void;
   onSort: (column: keyof T) => void;
   onFilter: (filterData: FieldValues) => void;
-  setVisibleColumns: (columns: (keyof T)[]) => void;
+  setVisibleColumns: (columns: (keyof T | string)[]) => void;
   refresh: () => Promise<void>;
 };

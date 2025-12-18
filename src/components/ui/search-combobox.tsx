@@ -1,14 +1,15 @@
 "use client"
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Controller, Control } from 'react-hook-form';
+import { Controller, Control, FieldValues } from 'react-hook-form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
 import useApi from '@/hooks/use-api';
 import { imageUrl } from '@/utils/image-url';
+import { SafeString } from '@/utils/safe-string';
 
 interface OptionItem {
-    [key: string]: any;
+    [key: string]: unknown;
     id: number | string;
     name: string;
     image?: string | null;
@@ -20,13 +21,13 @@ interface SearchComboboxProps {
     placeholder?: string;
     searchPlaceholder?: string;
     emptyMessage?: string;
-    control?: Control<any>;
+    control?: Control<FieldValues>;
     onValueChange?: (value: string | number | null) => void;
     error?: string;
     apiRoute?: string | null;
     searchLimit?: number;
     searchColumn?: string;
-    searchParams?: Record<string, any>;
+    searchParams?: Record<string, unknown>;
     disabled?: boolean;
     className?: string;
     debounceMs?: number;
@@ -86,13 +87,18 @@ interface SearchComboboxProps {
  * />
  */
 
-// Debounce utility function
-function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
-    let timeout: NodeJS.Timeout;
-    return function executedFunction(...args: Parameters<T>) {
+// Debounce utility function (preserve parameter types)
+function debounce<Args extends unknown[]>(
+    func: (...args: Args) => unknown,
+    wait: number
+): (...args: Args) => void {
+    let timeout: ReturnType<typeof setTimeout>;
+    return function executedFunction(...args: Args) {
         const later = () => {
             clearTimeout(timeout);
-            func(...args);
+            // call with preserved args
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (func as any)(...args);
         };
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
@@ -145,7 +151,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
             const loadCurrentItem = async (): Promise<void> => {
                 if (!apiRoute) {
                     // Find in fallback data
-                    const fallbackItem = fallbackData.find(item => item[valueKey] === valueToLoad);
+                    const fallbackItem = fallbackData.find(item => `${item[valueKey]}` === `${valueToLoad}`);
                     if (fallbackItem) {
                         setSelectedItem(fallbackItem);
                         setOptions([fallbackItem, ...fallbackData.filter(item => item[valueKey] !== valueToLoad)]);
@@ -156,8 +162,8 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
 
                 setIsLoading(true);
                 try {
-                    const { data, error } = await trigger(apiRoute, {
-                        method: 'GET',
+                    const { data, error } = await trigger<{ data: OptionItem[] }>(apiRoute, {
+                        method: 'get',
                         params: {
                             limit: 1,
                             [searchColumn]: valueToLoad,
@@ -165,10 +171,16 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                         }
                     });
 
-                    if (data && data.data && data.data.length > 0) {
-                        const itemData = data.data[0];
-                        setSelectedItem(itemData);
-                        setOptions([itemData, ...fallbackData]);
+                    const apiData = (data?.data ?? []) as OptionItem[];
+                    if (apiData.length > 0) {
+                        const itemData = apiData[0];
+                        setSelectedItem(typeof itemData !== 'undefined' ? itemData : null);
+
+                        if (itemData !== null && itemData !== undefined) {
+                            setOptions([itemData, ...fallbackData]);
+                        } else {
+                            setOptions(fallbackData);
+                        }
                         loadedCurrentValueRef.current = valueToLoad;
                         initialLoadedRef.current = true;
                     } else {
@@ -191,7 +203,8 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
         }
     }, [currentValue, value, valueKey, apiRoute, searchColumn, searchParams, fallbackData, trigger]);
 
-    const debouncedSearchRef = useRef<((...args: any[]) => void) | null>(null);
+    // debounced function will accept a single string argument (the query)
+    const debouncedSearchRef = useRef<((query: string) => void) | null>(null);
 
     useEffect(() => {
         debouncedSearchRef.current = debounce(async (query: string) => {
@@ -201,7 +214,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     setOptions(selectedItem ? [selectedItem, ...fallbackData.filter(item => item[valueKey] !== selectedItem[valueKey])] : fallbackData);
                 } else {
                     const filtered = fallbackData.filter(item =>
-                        item[labelKey]?.toLowerCase().includes(query.toLowerCase())
+                        String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
                     );
                     setOptions(selectedItem && !filtered.find(item => item[valueKey] === selectedItem[valueKey])
                         ? [selectedItem, ...filtered]
@@ -221,8 +234,8 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
             }
 
             try {
-                const { data, error } = await trigger(apiRoute, {
-                    method: 'GET',
+                const { data, error } = await trigger<{ data: OptionItem[] }>(apiRoute, {
+                    method: 'get',
                     params: {
                         limit: searchLimit,
                         [searchColumn]: query,
@@ -230,17 +243,12 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     }
                 });
 
-                if (data) {
-                    const apiData = data.data || [];
-                    // Merge with fallback data if API returns empty
-                    const finalData = apiData.length > 0 ? apiData : fallbackData.filter(item =>
-                        item[labelKey]?.toLowerCase().includes(query.toLowerCase())
-                    );
-                    setOptions(finalData);
+                const apiData = (data?.data ?? []) as OptionItem[];
+                if (apiData.length > 0) {
+                    setOptions(apiData);
                 } else {
-                    // Use filtered fallback data
                     const filtered = fallbackData.filter(item =>
-                        item[labelKey]?.toLowerCase().includes(query.toLowerCase())
+                        String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
                     );
                     setOptions(filtered);
                 }
@@ -248,20 +256,20 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                 if (error) {
                     console.warn('Search error, using fallback data:', error);
                     const filtered = fallbackData.filter(item =>
-                        item[labelKey]?.toLowerCase().includes(query.toLowerCase())
+                        String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
                     );
                     setOptions(filtered);
                 }
             } catch (err) {
                 console.warn('Search request failed, using fallback data:', err);
                 const filtered = fallbackData.filter(item =>
-                    item[labelKey]?.toLowerCase().includes(query.toLowerCase())
+                    String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
                 );
                 setOptions(filtered);
             } finally {
                 setIsSearching(false);
             }
-        }, debounceMs);
+        }, debounceMs) as (query: string) => void;
     }, [apiRoute, searchLimit, searchColumn, searchParams, debounceMs, selectedItem, fallbackData, labelKey, valueKey, trigger]);
 
     const handleSearch = useCallback((query: string) => {
@@ -277,20 +285,20 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
             {renderAvatar && (
                 <Avatar className="w-8 h-8 flex-shrink-0">
                     <AvatarImage
-                        src={imageUrl(item[avatarImageKey])}
-                        alt={item[labelKey]}
+                        src={imageUrl(String(item[avatarImageKey] ?? ''))}
+                        alt={String(item[labelKey] ?? '')}
                     />
                     <AvatarFallback className={`text-xs font-semibold ${avatarFallbackBg} text-white flex items-center justify-center w-full h-full`}>
-                        {item[labelKey]?.charAt(0)?.toUpperCase() || 'I'}
+                        {String(item[labelKey] ?? '').charAt(0)?.toUpperCase() || 'I'}
                     </AvatarFallback>
                 </Avatar>
             )}
-            <span>{item[labelKey]}</span>
+            <span>{typeof item[labelKey] === 'string' ? item[labelKey] : ''}</span>
         </div>
     ), [renderAvatar, avatarImageKey, labelKey, avatarFallbackBg]);
 
     const normalizeValue = useCallback((val: string | number | null | undefined): string | number => {
-        return val || '';
+        return typeof val === 'string' ? val : (typeof val === 'number' ? val : '');
     }, []);
 
     const handleValueChange = useCallback((newValue: string | number | null) => {
@@ -328,12 +336,9 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     value={normalizeValue(value)}
                     onValueChange={(newValue: string | number | null) => {
                         const processedValue = handleValueChange(newValue);
-                        const newSelectedItem = options.find(opt => opt[valueKey] === newValue);
-                        if (newSelectedItem) {
-                            setSelectedItem(newSelectedItem);
-                        } else if (!newValue) {
-                            setSelectedItem(null);
-                        }
+                        const newSelectedItem = options.find(opt => `${opt[valueKey]}` === `${newValue}`);
+                        // ensure we pass OptionItem | null (cast to satisfy TS)
+                        setSelectedItem((newSelectedItem ?? null) as OptionItem | null);
                         return processedValue;
                     }}
                     onSearchChange={handleSearch}
@@ -341,12 +346,12 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     placeholder={getPlaceholder()}
                     searchPlaceholder={searchPlaceholder}
                     emptyMessage={getEmptyMessage()}
-                    getLabel={(item: OptionItem) => item[labelKey]}
-                    getValue={(item: OptionItem) => item[valueKey]}
+                    getLabel={(item: OptionItem) => String(item[labelKey] ?? '')}
+                    getValue={(item: OptionItem) => item[valueKey] as string | number}
                     renderOption={renderItemOption}
                     disabled={disabled || isLoading}
                 />
-                {error && (
+                {typeof error === 'string' && (
                     <p className="text-destructive text-sm error-p mt-1">
                         {error}
                     </p>
@@ -369,11 +374,11 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                 render={({ field }) => {
                     const activeFieldValue = field.value;
 
-                    const finalOptions = (() => {
+                    const finalOptions = ((): OptionItem[] => {
                         const currentOptions = [...options];
 
-                        if (activeFieldValue && selectedItem && selectedItem[valueKey] === activeFieldValue) {
-                            const existsInOptions = currentOptions.find(opt => opt[valueKey] === activeFieldValue);
+                        if (selectedItem && `${selectedItem[valueKey]}` === `${activeFieldValue}`) {
+                            const existsInOptions = currentOptions.find(opt => `${opt[valueKey]}` === `${activeFieldValue}`);
                             if (!existsInOptions) {
                                 currentOptions.unshift(selectedItem);
                             }
@@ -389,20 +394,16 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                                 const processedValue = handleValueChange(value);
                                 field.onChange(processedValue);
 
-                                const newSelectedItem = options.find(opt => opt[valueKey] === value);
-                                if (newSelectedItem) {
-                                    setSelectedItem(newSelectedItem);
-                                } else if (!value) {
-                                    setSelectedItem(null);
-                                }
+                                const newSelectedItem = options.find(opt => `${opt[valueKey]}` === `${value}`);
+                                setSelectedItem((newSelectedItem ?? null) as OptionItem | null);
                             }}
                             onSearchChange={handleSearch}
                             options={finalOptions}
                             placeholder={getPlaceholder()}
                             searchPlaceholder={searchPlaceholder}
                             emptyMessage={getEmptyMessage()}
-                            getLabel={(item: OptionItem) => item[labelKey]}
-                            getValue={(item: OptionItem) => item[valueKey]}
+                            getLabel={(item: OptionItem) => String(item[labelKey] ?? '')}
+                            getValue={(item: OptionItem) => item[valueKey] as string | number}
                             renderOption={renderItemOption}
                             disabled={disabled || isLoading}
                         />
@@ -410,7 +411,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                 }}
             />
             <p className={`text-destructive text-sm ${name}-error error-p mt-1`}>
-                {error || ''}
+                {SafeString(error, '')}
             </p>
         </div>
     );

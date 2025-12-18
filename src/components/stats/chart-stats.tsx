@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, BarChart3, TrendingUp } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import {
     Bar,
     BarChart,
@@ -52,8 +52,12 @@ import {
 
 interface ChartDataItem {
     name: string;
-    value: number;
-    [key: string]: any;
+    value?: number;
+    count?: number;
+    Revenue?: number;
+    Users?: number;
+    // allow other fields but typed as unknown
+    [key: string]: unknown;
 }
 
 interface ChartStatsProps {
@@ -65,7 +69,7 @@ interface ChartStatsProps {
     dateRange?: { start: string; end: string };
     showCards?: boolean;
     cardColumns?: number;
-    onDataFetch?: (endpoint: string, params?: any) => Promise<any>;
+    onDataFetch?: (endpoint: string, params?: Record<string, unknown> | undefined) => Promise<unknown>;
     className?: string;
 }
 
@@ -90,7 +94,7 @@ const generateFakeData = (type: string): ChartDataItem[] => {
     }));
 };
 
-function ChartLoadingSkeleton({ showCards }: { showCards: boolean }) {
+function ChartLoadingSkeleton({ showCards }: { showCards: boolean }): JSX.Element {
     return (
         <div className="space-y-4">
             {showCards && (
@@ -122,14 +126,20 @@ function ChartLoadingSkeleton({ showCards }: { showCards: boolean }) {
     );
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+type TooltipPayloadEntry = {
+    name?: string;
+    value?: number | string;
+    color?: string;
+};
+
+const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayloadEntry[]; label?: string | number }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+            <div className="bg-popover p-3 border border-border rounded-lg shadow-lg text-popover-foreground">
                 <p className="text-sm font-medium mb-1">{label}</p>
-                {payload.map((entry: any, index: number) => (
+                {payload.map((entry, index) => (
                     <p key={index} className="text-sm" style={{ color: entry.color }}>
-                        {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
+                        {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : String(entry.value ?? '')}
                     </p>
                 ))}
             </div>
@@ -167,7 +177,18 @@ export default function ChartStats({
             if (dataEndpoint && onDataFetch) {
                 const params = dateRange ? { ...dateRange } : {};
                 const response = await onDataFetch(dataEndpoint, params);
-                setData(response.data || response);
+                // Safely extract array data from response
+                let extracted: unknown = response;
+                if (response && typeof response === 'object' && 'data' in (response as Record<string, unknown>)) {
+                    extracted = (response as Record<string, unknown>).data;
+                }
+                if (Array.isArray(extracted)) {
+                    setData(extracted as ChartDataItem[]);
+                } else {
+                    // fallback to fake data
+                    const fakeData = generateFakeData(chartType === 'line' || chartType === 'area' ? 'monthly' : 'category');
+                    setData(fakeData);
+                }
             } else {
                 // Simulate API call delay
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -175,9 +196,10 @@ export default function ChartStats({
                 const fakeData = generateFakeData(chartType === 'line' || chartType === 'area' ? 'monthly' : 'category');
                 setData(fakeData);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching chart data:', err);
-            setError(err?.message || 'Failed to load data');
+            const msg = err instanceof Error ? err.message : String(err);
+            setError(msg || 'Failed to load data');
             // Fallback to fake data on error
             const fakeData = generateFakeData(chartType === 'line' || chartType === 'area' ? 'monthly' : 'category');
             setData(fakeData);
@@ -222,8 +244,17 @@ export default function ChartStats({
         );
     }
 
+    // Helper to safely extract numeric value
+    const getNumericValue = (item: ChartDataItem): number => {
+        if (typeof item.value === 'number') return item.value;
+        if (typeof item.count === 'number') return item.count;
+        if (typeof item.Revenue === 'number') return item.Revenue;
+        if (typeof item.Users === 'number') return item.Users;
+        return 0;
+    };
+
     // Calculate totals for cards
-    const total = data.reduce((acc, item) => acc + (item.value || item.count || 0), 0);
+    const total = data.reduce((acc, item) => acc + getNumericValue(item), 0);
 
     const renderChart = () => {
         const commonProps = {
@@ -243,17 +274,17 @@ export default function ChartStats({
                         <Line
                             type="monotone"
                             dataKey="value"
-                            stroke="#3b82f6"
+                            stroke="var(--chart-1)"
                             strokeWidth={2}
-                            dot={{ fill: '#3b82f6' }}
+                            dot={{ fill: 'var(--chart-1)' }}
                         />
-                        {data[0]?.Revenue && (
+                        {typeof data[0]?.Revenue === 'number' && (
                             <Line
                                 type="monotone"
                                 dataKey="Revenue"
-                                stroke="#ef4444"
+                                stroke="var(--chart-2)"
                                 strokeWidth={2}
-                                dot={{ fill: '#ef4444' }}
+                                dot={{ fill: 'var(--chart-2)' }}
                             />
                         )}
                     </LineChart>
@@ -271,8 +302,8 @@ export default function ChartStats({
                             type="monotone"
                             dataKey="value"
                             stackId="1"
-                            stroke="#3b82f6"
-                            fill="#3b82f6"
+                            stroke="var(--chart-1)"
+                            fill="var(--chart-1)"
                             fillOpacity={0.6}
                         />
                     </AreaChart>
@@ -288,7 +319,7 @@ export default function ChartStats({
                         <Legend wrapperStyle={{ fontSize: '12px' }} />
                         <Bar
                             dataKey="value"
-                            fill="#3b82f6"
+                            fill="var(--chart-1)"
                             radius={[4, 4, 0, 0]}
                             name="Count"
                         />
@@ -311,10 +342,10 @@ export default function ChartStats({
                             </CardHeader>
                             <CardContent>
                                 <div className="text-2xl font-bold">
-                                    {(item.value || item.count || 0).toLocaleString()}
+                                    {getNumericValue(item).toLocaleString()}
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                    {total > 0 ? `${(((item.value || item.count || 0) / total) * 100).toFixed(1)}% of total` : '0% of total'}
+                                    {total > 0 ? `${((getNumericValue(item) / total) * 100).toFixed(1)}% of total` : '0% of total'}
                                 </p>
                             </CardContent>
                         </Card>

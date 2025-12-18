@@ -11,6 +11,7 @@ import { DataTableSliderFilter } from '@/components/ui/table/data-table-slider-f
 import { DataTableViewOptions } from '@/components/ui/table/data-table-view-options';
 import { cn } from '@/lib/utils';
 import { Cross2Icon } from '@radix-ui/react-icons';
+import { SafeString } from '@/utils/safe-string';
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<'div'> {
   table: Table<TData>;
@@ -21,7 +22,7 @@ export function DataTableToolbar<TData>({
   children,
   className,
   ...props
-}: DataTableToolbarProps<TData>) {
+}: DataTableToolbarProps<TData>): React.JSX.Element | null {
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const columns = React.useMemo(
@@ -73,7 +74,7 @@ interface DataTableToolbarFilterProps<TData> {
 
 function DataTableToolbarFilter<TData>({
   column
-}: DataTableToolbarFilterProps<TData>) {
+}: DataTableToolbarFilterProps<TData>): React.JSX.Element | null {
   {
     const columnMeta = column.columnDef.meta;
 
@@ -86,7 +87,7 @@ function DataTableToolbarFilter<TData>({
             <Input
               name={`text-${column.id}`}
               type='text'
-              placeholder={columnMeta.placeholder ?? columnMeta.label}
+              placeholder={SafeString(columnMeta.placeholder, SafeString(columnMeta.label, ""))}
               value={(column.getFilterValue() as string) ?? ''}
               onChange={(event) => column.setFilterValue(event.target.value)}
               className='h-8 w-40 lg:w-56'
@@ -100,12 +101,12 @@ function DataTableToolbarFilter<TData>({
                 name={`number-${column.id}`}
                 type='number'
                 inputMode='numeric'
-                placeholder={columnMeta.placeholder ?? columnMeta.label}
+                placeholder={SafeString(columnMeta.placeholder, SafeString(columnMeta.label, ""))}
                 value={(column.getFilterValue() as string) ?? ''}
                 onChange={(event) => column.setFilterValue(event.target.value)}
-                className={cn('h-8 w-[120px]', columnMeta.unit && 'pr-8')}
+                className={cn('h-8 w-[120px]', SafeString(columnMeta.unit, 'pr-8'))}
               />
-              {columnMeta.unit && (
+              {typeof columnMeta.unit !== "undefined" && (
                 <span className='bg-accent text-muted-foreground absolute top-0 right-0 bottom-0 flex items-center rounded-r-md px-2 text-sm'>
                   {columnMeta.unit}
                 </span>

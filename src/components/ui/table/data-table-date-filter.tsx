@@ -18,18 +18,18 @@ import { formatDate } from '@/lib/format';
 type DateSelection = Date[] | DateRange;
 
 function getIsDateRange(value: DateSelection): value is DateRange {
-  return value && typeof value === 'object' && !Array.isArray(value);
+  return value != null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function parseAsDate(timestamp: number | string | undefined): Date | undefined {
-  if (!timestamp) return undefined;
+  if (timestamp == null) return undefined;
   const numericTimestamp =
     typeof timestamp === 'string' ? Number(timestamp) : timestamp;
   const date = new Date(numericTimestamp);
   return !Number.isNaN(date.getTime()) ? date : undefined;
 }
 
-function parseColumnFilterValue(value: unknown) {
+function parseColumnFilterValue(value: unknown): (string | number | undefined)[] {
   if (value === null || value === undefined) {
     return [];
   }
@@ -60,15 +60,15 @@ export function DataTableDateFilter<TData>({
   column,
   title,
   multiple
-}: DataTableDateFilterProps<TData>) {
+}: DataTableDateFilterProps<TData>): React.JSX.Element {
   const columnFilterValue = column.getFilterValue();
 
   const selectedDates = React.useMemo<DateSelection>(() => {
-    if (!columnFilterValue) {
-      return multiple ? { from: undefined, to: undefined } : [];
+    if (columnFilterValue == null) {
+      return multiple != null ? { from: undefined, to: undefined } : [];
     }
 
-    if (multiple) {
+    if (multiple != null) {
       const timestamps = parseColumnFilterValue(columnFilterValue);
       return {
         from: parseAsDate(timestamps[0]),
@@ -88,11 +88,11 @@ export function DataTableDateFilter<TData>({
         return;
       }
 
-      if (multiple && !('getTime' in date)) {
+      if (multiple != null && !('getTime' in date)) {
         const from = date.from?.getTime();
         const to = date.to?.getTime();
-        column.setFilterValue(from || to ? [from, to] : undefined);
-      } else if (!multiple && 'getTime' in date) {
+        column.setFilterValue(typeof from != "undefined" || typeof to != "undefined" ? [from, to] : undefined);
+      } else if (multiple == null && 'getTime' in date) {
         column.setFilterValue(date.getTime());
       }
     },
@@ -108,7 +108,7 @@ export function DataTableDateFilter<TData>({
   );
 
   const hasValue = React.useMemo(() => {
-    if (multiple) {
+    if (multiple != null) {
       if (!getIsDateRange(selectedDates)) return false;
       return selectedDates.from || selectedDates.to;
     }
@@ -125,7 +125,7 @@ export function DataTableDateFilter<TData>({
   }, []);
 
   const label = React.useMemo(() => {
-    if (multiple) {
+    if (multiple != null) {
       if (!getIsDateRange(selectedDates)) return null;
 
       const hasSelectedDates = selectedDates.from || selectedDates.to;
@@ -176,7 +176,7 @@ export function DataTableDateFilter<TData>({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant='outline' size='sm' className='border-dashed'>
-          {hasValue ? (
+          {typeof hasValue !== 'undefined' ? (
             <div
               role='button'
               aria-label={`Clear ${title} filter`}
@@ -193,9 +193,9 @@ export function DataTableDateFilter<TData>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className='w-auto p-0' align='start'>
-        {multiple ? (
+        {typeof multiple !== 'undefined' ? (
           <Calendar
-            initialFocus
+            autoFocus
             mode='range'
             selected={
               getIsDateRange(selectedDates)

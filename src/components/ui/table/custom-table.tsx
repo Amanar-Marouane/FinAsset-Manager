@@ -1,5 +1,3 @@
-// Improved CustomTable.tsx with fixed bulk actions and selection
-
 import CustomTablePagination from '@/components/custom/data-table/custom-table-pagination';
 import { CustomTableToolbar } from '@/components/custom/data-table/custom-table-toolbar';
 import { CustomTableProps } from '@/components/custom/data-table/types';
@@ -16,26 +14,26 @@ import {
 } from '@/components/ui/table';
 import { useCustomTable } from '@/hooks/use-custom-table';
 import { IconLoader } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, ChangeEvent, JSX } from 'react';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 
-const CustomTable = <T extends Record<string, any>>({
+const CustomTable = <T extends { id: string | number }>({
   url,
   preFilled,
   columns,
   filters,
   bulkActions = [],
   onInit,
-}: CustomTableProps<T>) => {
-  const table = useCustomTable(url, columns, bulkActions, preFilled);
+}: CustomTableProps<T>): JSX.Element => {
+  const table = useCustomTable<T>(url, columns, bulkActions, preFilled);
   const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
     if (onInit) {
-      //@ts-ignore
       onInit(table);
     }
   }, []);
+
   useEffect(() => {
     setShowBulkActions(table.selectedRows.length > 0);
   }, [table.selectedRows]);
@@ -44,22 +42,20 @@ const CustomTable = <T extends Record<string, any>>({
     table.data.every(row =>
       table.selectedRows.some(selectedRow => selectedRow.id === row.id)
     );
-  const areSomeRowsSelected = table.selectedRows.length > 0 && !areAllRowsSelected;
 
   return (
     <div className='flex flex-1 flex-col space-y-4'>
       <div className={table.loading ? 'hidden' : ''}>
-        <CustomTableToolbar table={table} filters={filters} />
+        <CustomTableToolbar table={table} filters={filters ?? []} />
       </div>
 
       {/* Bulk Actions Bar */}
-      {showBulkActions && bulkActions && bulkActions.length > 0 && (
+      {showBulkActions && bulkActions.length > 0 && (
         <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
           <span className="text-sm font-medium">{table.selectedRows.length} sélectionné(s)</span>
           <div className="flex-1"></div>
           <div className="flex items-center gap-2">
             {bulkActions.map((action, index) => (
-              //@ts-ignore
               <Button
                 key={index}
                 variant="outline"
@@ -68,7 +64,7 @@ const CustomTable = <T extends Record<string, any>>({
                 disabled={action.disabled ? action.disabled(table.selectedRows) : false}
                 className={`flex items-center rounded-lg shadow-sm gap-1 ${action.className ?? ''}`}
               >
-                {action.icon && action.icon}
+                {action.icon != null && action.icon}
                 {action.label}
               </Button>
             ))}
@@ -82,7 +78,7 @@ const CustomTable = <T extends Record<string, any>>({
           columnCount={table.visibleColumns.length}
           rowCount={table.rowsPerPage}
           filterCount={filters ? Object.keys(filters).length : 0}
-          withBulkActions={bulkActions && bulkActions.length > 0}
+          withBulkActions={bulkActions.length > 0}
           withPagination={true}
           withViewOptions={false}
         />
@@ -90,7 +86,7 @@ const CustomTable = <T extends Record<string, any>>({
 
       {!table.loading && (
         <>
-          <div className='relative flex flex-1'>
+          <div className='relative'>
             {table.loading && (
               <div className='bg-accent absolute inset-0 z-50 flex h-full w-full items-center justify-center rounded-lg border opacity-40'>
                 <IconLoader className='animate-spin' />
@@ -98,36 +94,22 @@ const CustomTable = <T extends Record<string, any>>({
             )}
 
             <div
-              className={`absolute inset-0 flex overflow-hidden rounded-lg border ${table.loading && 'blur-sm'}`}
+              className={` flex overflow-hidden rounded-lg border ${table.loading && 'blur-sm'}`}
             >
               <ScrollArea className='h-full w-full'>
                 <Table>
                   <TableHeader className='bg-muted sticky top-0 z-10'>
                     <TableRow>
                       {/* Selection checkbox column */}
-                      {bulkActions && bulkActions.length > 0 && (
+                      {bulkActions.length > 0 && (
                         <TableHead className="w-[50px]">
                           <Checkbox
                             checked={areAllRowsSelected}
-                            //@ts-ignore
-                            indeterminate={areSomeRowsSelected}
                             onCheckedChange={(checked) => {
-                              if (checked) {
-                                const newSelectedRows = [...table.selectedRows];
-                                table.data.forEach(row => {
-                                  if (!table.selectedRows.some(selectedRow => selectedRow.id === row.id)) {
-                                    newSelectedRows.push(row);
-                                  }
-                                });
-                                table.selectedRows = newSelectedRows;
-                                table.onSelectAllRows({ target: { checked: true } } as any);
-                              } else {
-                                const filteredSelectedRows = table.selectedRows.filter(
-                                  selectedRow => !table.data.some(row => row.id === selectedRow.id)
-                                );
-                                table.selectedRows = filteredSelectedRows;
-                                table.onSelectAllRows({ target: { checked: false } } as any);
-                              }
+                              const event = {
+                                target: { checked: checked === true }
+                              } as ChangeEvent<HTMLInputElement>;
+                              table.onSelectAllRows(event);
                             }}
                             aria-label="Select all"
                             className="rounded-lg"
@@ -135,36 +117,35 @@ const CustomTable = <T extends Record<string, any>>({
                         </TableHead>
                       )}
 
-                      {table.columns.map(
-                        (col) =>
-                          // @ts-ignore
-                          table.visibleColumns.includes(col.data) && (
-                            <TableHead
-                              // @ts-ignore
-                              key={col.data}
-                              colSpan={col.width ? +col.width : 1}
-                              className={col.sortable ? 'cursor-pointer hover:bg-muted-foreground/10' : ''}
-                              onClick={() => {
-                                if (col.sortable) {
-                                  // @ts-ignore
-                                  table.onSort(col.data);
-                                }
-                              }}
-                            >
-                              <div className="flex items-center">
-                                {col.label}
-                                {col.sortable && (
-                                  <span className="ml-1">
-                                    {/* @ts-ignore */}
-                                    {table.sortBy === col.data && table.sortDir === 'asc' && '▲'}
-                                    {/* @ts-ignore */}
-                                    {table.sortBy === col.data && table.sortDir === 'desc' && '▼'}
-                                  </span>
-                                )}
-                              </div>
-                            </TableHead>
-                          )
-                      )}
+                      {table.columns.map((col) => {
+                        if (!table.visibleColumns.includes(col.data)) return null;
+
+                        const key = String(col.data);
+                        const colSpan = typeof col.width !== 'undefined' ? +col.width : 1;
+
+                        return (
+                          <TableHead
+                            key={key}
+                            colSpan={colSpan}
+                            className={col.sortable ? 'cursor-pointer hover:bg-muted-foreground/10' : ''}
+                            onClick={() => {
+                              if (col.sortable) {
+                                table.onSort(col.data as keyof T);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center">
+                              {col.label}
+                              {col.sortable && (
+                                <span className="ml-1">
+                                  {table.sortBy === col.data && table.sortDir === 'asc' && '▲'}
+                                  {table.sortBy === col.data && table.sortDir === 'desc' && '▼'}
+                                </span>
+                              )}
+                            </div>
+                          </TableHead>
+                        );
+                      })}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -172,55 +153,71 @@ const CustomTable = <T extends Record<string, any>>({
                       table.data.map((row) => (
                         <TableRow key={row.id}>
                           {/* Row selection checkbox */}
-                          {bulkActions && bulkActions.length > 0 && (
+                          {bulkActions.length > 0 && (
                             <TableCell>
                               <Checkbox
                                 checked={table.selectedRows.some(
                                   (selectedRow) => selectedRow.id === row.id
                                 )}
-                                onCheckedChange={(checked) =>
-                                  table.onCheckboxChange({ target: { checked } } as any, row)
-                                }
+                                onCheckedChange={(checked) => {
+                                  const event = {
+                                    target: { checked }
+                                  } as ChangeEvent<HTMLInputElement>;
+                                  table.onCheckboxChange(event, row);
+                                }}
                                 aria-label="Select row"
                                 className="rounded-lg"
                               />
                             </TableCell>
                           )}
 
-                          {table.columns.map(
-                            (col) =>
-                              // @ts-ignore
-                              table.visibleColumns.includes(col.data) &&
-                              // @ts-ignore
-                              (col.render ? (
-                                <TableCell
-                                  // @ts-ignore
-                                  key={col.data + '-' + row.id}
-                                  colSpan={col.width ? +col.width : 1}
-                                >
+                          {table.columns.map((col) => {
+                            if (!table.visibleColumns.includes(col.data as string)) return null;
+                            const colKey = `${String(col.data)}-${row.id}`;
+                            const span = typeof col.width !== 'undefined' ? +col.width : 1;
+
+                            if (col.render) {
+                              return (
+                                <TableCell key={colKey} colSpan={span}>
                                   {col.render(
-                                    row[col.data],
+                                    col.data in row ? row[col.data as keyof T] : undefined,
                                     row,
                                     table.refresh
                                   )}
                                 </TableCell>
-                              ) : (
-                                <TableCell
-                                  // @ts-ignore
-                                  key={`${col.data}-${row.id}`}
-                                  colSpan={col.width ? +col.width : 1}
-                                >
-                                  {/*@ts-ignore*/}
-                                  {row[col.data] ?? ''}
-                                </TableCell>
-                              ))
-                          )}
+                              );
+                            }
+
+                            const raw = row[col.data as keyof T] as unknown;
+                            let content: React.ReactNode;
+
+                            if (raw === null || raw === undefined) {
+                              content = '';
+                            } else if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
+                              content = String(raw);
+                            } else if (React.isValidElement(raw)) {
+                              content = raw;
+                            } else {
+                              // Fallback: stringify object/other types
+                              try {
+                                content = String(raw);
+                              } catch {
+                                content = '';
+                              }
+                            }
+
+                            return (
+                              <TableCell key={colKey} colSpan={span}>
+                                {content}
+                              </TableCell>
+                            );
+                          })}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
                         <TableCell
-                          colSpan={(bulkActions && bulkActions.length > 0 ? 1 : 0) + (table.visibleColumns.length ?? 0)}
+                          colSpan={(bulkActions.length > 0 ? 1 : 0) + (table.visibleColumns.length ?? 0)}
                           className='h-24 text-center'
                         >
                           Aucune donnée disponible

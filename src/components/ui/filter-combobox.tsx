@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { Controller } from 'react-hook-form';
+import { Controller, type Control, FieldValues } from 'react-hook-form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
@@ -42,6 +42,34 @@ import { imageUrl } from "@/utils/image-url";
  * />
  */
 
+export interface FilterComboboxOption {
+    name: string;
+    id: number | string;
+    image?: string | null;
+}
+
+// New typed props
+interface FilterComboboxProps {
+    name?: string;
+    label?: string;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+    control?: Control<FieldValues> | null;
+    onValueChange?: (value: string | number | null) => void;
+    error?: string | null;
+    options?: FilterComboboxOption[];
+    disabled?: boolean;
+    className?: string;
+    labelKey?: keyof FilterComboboxOption & string;
+    valueKey?: keyof FilterComboboxOption & string;
+    renderAvatar?: boolean;
+    avatarImageKey?: keyof FilterComboboxOption & string;
+    avatarFallbackBg?: string;
+    value?: string | number | null;
+    showLabel?: boolean;
+}
+
 const FilterCombobox = ({
     name,
     label,
@@ -58,15 +86,15 @@ const FilterCombobox = ({
     ],
     disabled = false,
     className = "",
-    labelKey = "name",
-    valueKey = "id",
+    labelKey = "name" as keyof FilterComboboxOption & string,
+    valueKey = "id" as keyof FilterComboboxOption & string,
     renderAvatar = false,
-    avatarImageKey = "image",
+    avatarImageKey = "image" as keyof FilterComboboxOption & string,
     avatarFallbackBg = "bg-gray-500",
     value,
     showLabel = true
-}) => {
-    const [filteredOptions, setFilteredOptions] = useState(options);
+}: FilterComboboxProps) => {
+    const [filteredOptions, setFilteredOptions] = useState<FilterComboboxOption[]>(options);
 
     useEffect(() => {
         setFilteredOptions(options);
@@ -74,45 +102,46 @@ const FilterCombobox = ({
 
     // Debounced search function
     const debouncedSearch = useMemo(() =>
-        debounce((query) => {
+        debounce((query: string) => {
             if (!query || query.trim() === '') {
                 setFilteredOptions(options);
                 return;
             }
 
             const lowerQuery = query.toLowerCase();
-            const filtered = options.filter(option =>
-                option[labelKey]?.toLowerCase().includes(lowerQuery)
-            );
+            const filtered = options.filter(option => {
+                const labelVal = option[labelKey];
+                return String(labelVal ?? '').toLowerCase().includes(lowerQuery);
+            });
             setFilteredOptions(filtered);
         }, 300),
         [options, labelKey]
     );
 
-    const handleSearch = useCallback((query) => {
+    const handleSearch = useCallback((query: string) => {
         debouncedSearch(query);
     }, [debouncedSearch]);
 
-    const renderOption = useCallback((item) => (
+    const renderOption = useCallback((item: FilterComboboxOption) => (
         <div className="flex items-center gap-2">
             {renderAvatar && (
                 <Avatar className="w-8 h-8 flex-shrink-0">
                     <AvatarImage
-                        src={imageUrl(item[avatarImageKey])}
-                        alt={item[labelKey]}
+                        src={imageUrl(item.image ?? '')}
+                        alt={String(item[labelKey] ?? '')}
                     />
                     <AvatarFallback className={`text-xs font-semibold ${avatarFallbackBg} text-white flex items-center justify-center w-full h-full`}>
-                        {item[labelKey]?.charAt(0)?.toUpperCase() || "?"}
+                        {String(item[labelKey] ?? '')?.charAt(0)?.toUpperCase() || "?"}
                     </AvatarFallback>
                 </Avatar>
             )}
-            <span>{item[labelKey]}</span>
+            <span>{String(item[labelKey] ?? '')}</span>
         </div>
     ), [renderAvatar, avatarImageKey, labelKey, avatarFallbackBg]);
 
-    const normalizeValue = useCallback((val) => val || '', []);
-    const handleValueChange = useCallback((newValue) => {
-        onValueChange?.(newValue);
+    const normalizeValue = useCallback((val: string | number | null | undefined) => val ?? '', []);
+    const handleValueChange = useCallback((newValue: string | number | null) => {
+        onValueChange?.(newValue ?? null);
         return newValue;
     }, [onValueChange]);
 
@@ -133,8 +162,8 @@ const FilterCombobox = ({
                     placeholder={placeholder}
                     searchPlaceholder={searchPlaceholder}
                     emptyMessage={emptyMessage}
-                    getLabel={(item) => item[labelKey]}
-                    getValue={(item) => item[valueKey]}
+                    getLabel={(item: FilterComboboxOption) => String(item[labelKey] ?? '')}
+                    getValue={(item: FilterComboboxOption) => (item[valueKey] as unknown) as string | number}
                     renderOption={renderOption}
                     disabled={disabled}
                 />
@@ -155,13 +184,13 @@ const FilterCombobox = ({
                 </Label>
             )}
             <Controller
-                name={name}
+                name={name ?? ''}
                 control={control}
                 render={({ field }) => (
                     <Combobox
                         value={normalizeValue(field.value)}
-                        onValueChange={(value) => {
-                            const processedValue = handleValueChange(value);
+                        onValueChange={(v: string | number | null) => {
+                            const processedValue = handleValueChange(v);
                             field.onChange(processedValue);
                         }}
                         onSearchChange={handleSearch}
@@ -169,8 +198,8 @@ const FilterCombobox = ({
                         placeholder={placeholder}
                         searchPlaceholder={searchPlaceholder}
                         emptyMessage={emptyMessage}
-                        getLabel={(item) => item[labelKey]}
-                        getValue={(item) => item[valueKey]}
+                        getLabel={(item: FilterComboboxOption) => String(item[labelKey] ?? '')}
+                        getValue={(item: FilterComboboxOption) => (item[valueKey] as unknown) as string | number}
                         renderOption={renderOption}
                         disabled={disabled}
                     />

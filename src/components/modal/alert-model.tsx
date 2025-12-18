@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface AlertModelProps {
   isOpen: boolean;
@@ -34,11 +34,9 @@ export const AlertModel: React.FC<AlertModelProps> = ({
       onClose={onClose}
     >
       <div className='flex w-full items-center justify-end space-x-2 pt-6'>
-        {/* @ts-ignore-next-line */}
         <Button disabled={loading} variant='outline' onClick={onClose}>
           Annuler
         </Button>
-        {/* @ts-ignore-next-line */}
         <Button disabled={loading} variant='destructive' onClick={onConfirm}>
           Continuer
         </Button>

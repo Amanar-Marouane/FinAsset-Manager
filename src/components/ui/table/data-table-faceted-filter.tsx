@@ -37,7 +37,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
   multiple
-}: DataTableFacetedFilterProps<TData, TValue>) {
+}: DataTableFacetedFilterProps<TData, TValue>): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
 
   const columnFilterValue = column?.getFilterValue();
@@ -50,7 +50,7 @@ export function DataTableFacetedFilter<TData, TValue>({
     (option: Option, isSelected: boolean) => {
       if (!column) return;
 
-      if (multiple) {
+      if (typeof multiple !== "undefined") {
         const newSelectedValues = new Set(selectedValues);
         if (isSelected) {
           newSelectedValues.delete(option.value);
@@ -157,7 +157,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     </div>
                     {option.icon && <option.icon />}
                     <span className='truncate'>{option.label}</span>
-                    {option.count && (
+                    {typeof option.count !== "undefined" && (
                       <span className='ml-auto font-mono text-xs'>
                         {option.count}
                       </span>

@@ -2,7 +2,7 @@
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -65,7 +65,7 @@ interface MetricStatsProps {
     dateRange?: { start: string; end: string };
     showTrends?: boolean;
     columns?: number;
-    onDataFetch?: (endpoint: string, params?: any) => Promise<any>;
+    onDataFetch?: (endpoint: string, params?: unknown) => Promise<{ data: MetricItem[] } | MetricItem[]>;
     className?: string;
 }
 
@@ -212,7 +212,17 @@ export default function MetricStats({
             if (metricsEndpoint && onDataFetch) {
                 const params = dateRange ? { ...dateRange } : {};
                 const response = await onDataFetch(metricsEndpoint, params);
-                setMetrics(response.data || response);
+                // Safely extract data: if response has a 'data' property, use it; otherwise treat response itself as the array
+                let extracted: MetricItem[];
+                if (response && typeof response === 'object' && 'data' in response) {
+                    extracted = (response as { data: MetricItem[] }).data;
+                } else if (Array.isArray(response)) {
+                    extracted = response as MetricItem[];
+                } else {
+                    // fallback to fake data
+                    extracted = generateFakeMetrics();
+                }
+                setMetrics(extracted);
             } else {
                 // Simulate API call delay
                 await new Promise(resolve => setTimeout(resolve, 800));
@@ -220,9 +230,10 @@ export default function MetricStats({
                 const fakeMetrics = generateFakeMetrics();
                 setMetrics(fakeMetrics);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching metrics:', err);
-            setError(err?.message || 'Failed to load metrics');
+            const msg = err instanceof Error ? err.message : String(err);
+            setError(msg || 'Failed to load metrics');
             // Fallback to fake data on error
             const fakeMetrics = generateFakeMetrics();
             setMetrics(fakeMetrics);
