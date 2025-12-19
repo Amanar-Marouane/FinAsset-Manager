@@ -61,6 +61,12 @@ const Index = () => {
             render: (v: any) => v ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(Number(v)) + '/mois' : '-'
         },
         {
+            data: 'montant_net',
+            label: 'Montant net',
+            sortable: true,
+            render: (v: any) => v ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(Number(v)) : '-'
+        },
+        {
             data: 'actions',
             label: 'Actions',
             sortable: false,
@@ -89,6 +95,7 @@ const Index = () => {
         { field: 'organization', label: 'Organisme', type: 'text' },
         { field: 'montant', label: 'Montant', type: 'number' },
         { field: 'monthly_payment', label: 'Mensualité', type: 'number' },
+        { field: 'montant_net', label: 'Montant net', type: 'number' },
     ];
 
     return (
@@ -154,6 +161,7 @@ const creditSchema = zod.object({
     montant: zod.string().min(1, 'Le montant est requis'),
     monthly_payment: zod.string().optional(),
     organization: zod.string().optional(),
+    montant_net: zod.string().optional(),
 });
 
 type CreditFormValues = zod.infer<typeof creditSchema>;
@@ -169,6 +177,7 @@ const CreditForm = ({ onSuccess, initialData }: { onSuccess: () => void, initial
             montant: initialData?.montant || '',
             monthly_payment: initialData?.monthly_payment || '',
             organization: initialData?.organization || '',
+            montant_net: (initialData as any)?.montant_net || '',
         }
     });
 
@@ -179,6 +188,7 @@ const CreditForm = ({ onSuccess, initialData }: { onSuccess: () => void, initial
                 montant: values.montant,
                 monthly_payment: values.monthly_payment || null,
                 organization: values.organization || null,
+                montant_net: values.montant_net || null,
             };
 
             if (initialData) {
@@ -200,39 +210,54 @@ const CreditForm = ({ onSuccess, initialData }: { onSuccess: () => void, initial
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="organization"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Organisme</FormLabel>
-                            <FormControl><Input placeholder="Ex: Banque Populaire" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="montant"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Montant (avec intérêts)</FormLabel>
-                            <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="monthly_payment"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Mensualité</FormLabel>
-                            <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                    <FormField
+                        control={form.control}
+                        name="organization"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Organisme</FormLabel>
+                                <FormControl><Input placeholder="Ex: Banque Populaire" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="montant_net"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Montant net</FormLabel>
+                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <FormField
+                        control={form.control}
+                        name="montant"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Montant (avec intérêts)</FormLabel>
+                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="monthly_payment"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Mensualité</FormLabel>
+                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
                 </div>

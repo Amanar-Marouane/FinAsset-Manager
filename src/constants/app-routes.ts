@@ -32,4 +32,7 @@ export const APP_ROUTES = {
     terrains: {
         index: `${PROTECTED_PREFIX}/terrains`,
     },
+    banques: {
+        index: `${PROTECTED_PREFIX}/banques`,
+    },
 };

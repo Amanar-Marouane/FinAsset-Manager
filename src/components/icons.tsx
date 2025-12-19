@@ -1,4 +1,4 @@
-import { Banknote, Briefcase, Building2, Car, CreditCard, Home, LucideIcon, Sprout, Wallet } from "lucide-react";
+import { Banknote, BanknoteX, Briefcase, Building2, Car, CreditCard, Home, LucideIcon, PiggyBank, Sprout, Wallet } from "lucide-react";
 
 import React from 'react';
 
@@ -13,4 +13,5 @@ export const Icons: Record<string, LucideIcon> = {
   loan: Banknote,
   land: Sprout,
   IconBuildingCommunity: Building2,
+  IconBuildingBank: BanknoteX,
 };

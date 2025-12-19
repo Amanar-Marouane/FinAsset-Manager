@@ -40,6 +40,7 @@ interface DashboardMetrics {
         projects_total_capital: string;
         credits_total_montant: string;
         credits_total_monthly_payment: string;
+        credits_total_montant_net: string;
         prets_total_montant: string;
         bank_accounts_total_initial_balance: string;
         cars_total_value: string;
@@ -207,11 +208,17 @@ export default function Page(): React.JSX.Element {
                                     />
                                 </div>
 
-                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                                     <StatCard
                                         title="Crédits (Entrants)"
                                         value={formatCurrency(metrics.totals.credits_total_montant)}
                                         description={`Mensualité: ${formatCurrency(metrics.totals.credits_total_monthly_payment)}`}
+                                        icon={CreditCard}
+                                    />
+                                    <StatCard
+                                        title="Crédits (Net)"
+                                        value={formatCurrency(metrics.totals.credits_total_montant_net)}
+                                        description="Montant net (sans intérêts)"
                                         icon={CreditCard}
                                     />
                                     <StatCard
@@ -344,6 +351,10 @@ export default function Page(): React.JSX.Element {
                                                 <p className="text-sm font-medium text-muted-foreground">Crédits (Entrants)</p>
                                                 <p className="text-xl font-bold">{formatCurrency(metrics.totals.credits_total_montant)}</p>
                                                 <p className="text-xs text-muted-foreground">Mensualité: {formatCurrency(metrics.totals.credits_total_monthly_payment)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-muted-foreground">Crédits (Net)</p>
+                                                <p className="text-xl font-bold">{formatCurrency(metrics.totals.credits_total_montant_net)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-sm font-medium text-muted-foreground">Prêts (Sortants)</p>
