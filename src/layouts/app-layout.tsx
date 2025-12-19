@@ -1,27 +1,26 @@
 'use client'
 import LoadingView from "@/components/animations/loading-view";
 import { APP_ROUTES } from '@/constants/app-routes';
-import { useAppContext } from "@/hooks/use-app-context";
+import useUser from "@/hooks/use-user";
 import { useRouter } from 'next/navigation';
 import { useEffect } from "react";
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
-    const { isAuthenticated, isLoading } = useAppContext();
+    const { isAuth, loading } = useUser();
 
     useEffect(() => {
-        if (!isAuthenticated && !isLoading) {
-            return router.push(APP_ROUTES.signIn);
+        if (!isAuth && !loading) {
+            router.replace(APP_ROUTES.signIn);
         }
-    }, [isAuthenticated, isLoading, router]);
+    }, [isAuth, loading, router]);
 
-    if (isLoading || !isAuthenticated) return <LoadingView />;
+    if (loading) return <LoadingView />;
 
-    return (
-        <>
-            {children}
-        </>
-    )
-}
+    if (!isAuth) return null;
+
+    return <>{children}</>;
+};
+
 
 export default AppLayout

@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { Project } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,12 +31,12 @@ const Index = () => {
     const { showError } = useAppContext();
 
     const handleDelete = async (id: string | number): Promise<void> => {
-        const { error } = await trigger(ROUTES.projects.delete(id), { method: 'delete' });
-
-        if (error) {
-            showError((error as any).response?.data?.message || 'Erreur lors de la suppression du projet');
-        } else {
+        try {
+            await trigger(ROUTES.projects.delete(id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression du projet');
         }
     };
 
@@ -181,20 +181,17 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
                 net: values.net,
             };
 
-            let response, error;
             if (initialData) {
-                ({ data: response, error } = await trigger(ROUTES.projects.update(initialData.id), { method: 'put', data: payload }));
+                await trigger(ROUTES.projects.update(initialData.id), { method: 'put', data: payload });
             } else {
-                ({ data: response, error } = await trigger(ROUTES.projects.store, { method: 'post', data: payload }));
+                await trigger(ROUTES.projects.store, { method: 'post', data: payload });
             }
 
-            if (response) {
-                showSuccess(initialData ? 'Projet modifié' : 'Projet ajouté');
-                onSuccess();
-            }
-            if (error) {
-                showError((error as any).response?.data?.message || 'Erreur lors de l\'enregistrement');
-            }
+            showSuccess(initialData ? 'Projet modifié' : 'Projet ajouté');
+            onSuccess();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de l\'enregistrement');
         } finally {
             setIsSubmitting(false);
         }

@@ -4,7 +4,7 @@ import { Controller, Control, FieldValues } from 'react-hook-form';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
-import useApi from '@/hooks/use-api';
+import useApi, { ApiError } from '@/hooks/use-api';
 import { imageUrl } from '@/utils/image-url';
 import { SafeString } from '@/utils/safe-string';
 
@@ -162,7 +162,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
 
                 setIsLoading(true);
                 try {
-                    const { data, error } = await trigger<{ data: OptionItem[] }>(apiRoute, {
+                    const resp = await trigger<{ data: OptionItem[] }>(apiRoute, {
                         method: 'get',
                         params: {
                             limit: 1,
@@ -171,7 +171,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                         }
                     });
 
-                    const apiData = (data?.data ?? []) as OptionItem[];
+                    const apiData = (((resp as any)?.data?.data) ?? (resp as any)?.data ?? []) as OptionItem[];
                     if (apiData.length > 0) {
                         const itemData = apiData[0];
                         setSelectedItem(typeof itemData !== 'undefined' ? itemData : null);
@@ -186,13 +186,8 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     } else {
                         setOptions(fallbackData);
                     }
-
-                    if (error) {
-                        console.warn('Failed to load current item, using fallback:', error);
-                        setOptions(fallbackData);
-                    }
                 } catch (err) {
-                    console.warn('Failed to load current item, using fallback:', err);
+                    console.warn('Failed to load current item, using fallback:', (err as ApiError)?.message || err);
                     setOptions(fallbackData);
                 } finally {
                     setIsLoading(false);
@@ -234,7 +229,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
             }
 
             try {
-                const { data, error } = await trigger<{ data: OptionItem[] }>(apiRoute, {
+                const resp = await trigger<{ data: OptionItem[] }>(apiRoute, {
                     method: 'get',
                     params: {
                         limit: searchLimit,
@@ -243,7 +238,7 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     }
                 });
 
-                const apiData = (data?.data ?? []) as OptionItem[];
+                const apiData = (((resp as any)?.data?.data) ?? (resp as any)?.data ?? []) as OptionItem[];
                 if (apiData.length > 0) {
                     setOptions(apiData);
                 } else {
@@ -252,16 +247,8 @@ const SearchCombobox: React.FC<SearchComboboxProps> = ({
                     );
                     setOptions(filtered);
                 }
-
-                if (error) {
-                    console.warn('Search error, using fallback data:', error);
-                    const filtered = fallbackData.filter(item =>
-                        String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
-                    );
-                    setOptions(filtered);
-                }
             } catch (err) {
-                console.warn('Search request failed, using fallback data:', err);
+                console.warn('Search request failed, using fallback data:', (err as ApiError)?.message || err);
                 const filtered = fallbackData.filter(item =>
                     String(item[labelKey] ?? '').toLowerCase().includes(query.toLowerCase())
                 );

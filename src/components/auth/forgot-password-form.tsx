@@ -9,7 +9,7 @@ import { z as zod } from 'zod';
 
 import { APP_ROUTES } from '@/constants/app-routes';
 import { ROUTES } from '@/constants/routes';
-import useApi from '@/hooks/use-api';
+import useApi, { ApiError } from '@/hooks/use-api';
 
 import LoadingView from '../animations/loading-view';
 import { Button } from '../ui/button';
@@ -41,21 +41,15 @@ const ForgotPasswordForm = () => {
         setIsSuccess(false);
 
         try {
-            const { error, status } = await trigger(ROUTES.forgotPassword, {
+            await trigger(ROUTES.forgotPassword, {
                 data: formData,
                 method: 'post',
             });
-
-            if (error) {
-                setErrorStatus(status || 500);
-                return;
-            }
-
             setIsSuccess(true);
             setIsSubmitted(true);
-
         } catch (e) {
-            setErrorStatus(500);
+            const err = e as ApiError;
+            setErrorStatus(err.status || 500);
         } finally {
             setIsLoading(false);
         }

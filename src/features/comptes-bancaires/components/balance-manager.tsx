@@ -6,7 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import CustomTable from "@/components/ui/table/custom-table";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { AccountBalance } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,22 +40,17 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
         try {
             const payload = { ...values, bank_account_id: accountId, amount: Number(values.amount) };
 
-            let response, error;
             if (initialData) {
-                // Update
-                ({ data: response, error } = await trigger(ROUTES.accountBalances.update(initialData.id), { method: 'put', data: payload }));
+                await trigger(ROUTES.accountBalances.update(initialData.id), { method: 'put', data: payload });
             } else {
-                // Create
-                ({ data: response, error } = await trigger(ROUTES.accountBalances.store, { method: 'post', data: payload }));
+                await trigger(ROUTES.accountBalances.store, { method: 'post', data: payload });
             }
 
-            if (response) {
-                showSuccess(initialData ? 'Solde mis à jour' : 'Solde enregistré');
-                onSuccess();
-            }
-            if (error) {
-                showError(error.response?.data?.message || 'Erreur lors de l\'enregistrement du solde');
-            }
+            showSuccess(initialData ? 'Solde mis à jour' : 'Solde enregistré');
+            onSuccess();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de l\'enregistrement du solde');
         } finally {
             setIsSubmitting(false);
         }
@@ -111,12 +106,13 @@ export const BalanceManager = ({ accountId, accountCurrency }: { accountId: numb
     const refreshTable = () => setRefreshKey(k => k + 1);
 
     const handleDelete = async (balance: AccountBalance) => {
-        const { error } = await trigger(ROUTES.accountBalances.delete(balance.id), { method: 'delete' });
-        if (error) {
-            showError(error.response?.data?.message || 'Erreur lors de la suppression');
-        } else {
+        try {
+            await trigger(ROUTES.accountBalances.delete(balance.id), { method: 'delete' });
             showSuccess('Solde supprimé');
             refreshTable();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression');
         }
     };
 

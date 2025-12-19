@@ -11,11 +11,13 @@ const GuestLayout = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-        router.replace(APP_ROUTES.dashboard);
+      router.replace(APP_ROUTES.dashboard);
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isAuthenticated || isLoading) return <LoadingView />;
+  if (isLoading) return <LoadingView />;
+
+  if (isAuthenticated) return null;
 
   return <>{children}</>;
 };

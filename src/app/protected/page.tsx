@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ROUTES } from '@/constants/routes';
 import AccountBalanceList from '@/features/dashboard/components/account-balance-list';
-import useApi from '@/hooks/use-api';
+import useApi, { ApiError } from '@/hooks/use-api';
 import {
     Building2,
     Car,
@@ -133,7 +133,6 @@ export default function Page(): React.JSX.Element {
         const fetchMetrics = async () => {
             setLoading(true);
             try {
-                // The API wraps the response in { status, message, data }
                 const response = await trigger<{ status: string; message: string; data: DashboardMetrics }>(ROUTES.dashboard.metrics);
 
                 // Extract the actual metrics from response.data.data
@@ -145,8 +144,8 @@ export default function Page(): React.JSX.Element {
                 } else {
                     setMetrics(null);
                 }
-            } catch (error) {
-                console.error('Error fetching dashboard metrics:', error);
+            } catch (e) {
+                console.error('Error fetching dashboard metrics:', (e as ApiError)?.message || e);
                 setMetrics(null);
             } finally {
                 setLoading(false);

@@ -1,19 +1,12 @@
-export interface BackErrorResponse {
-    status: number;
-    response: {
-        data: {
-            errors: Record<string, string[]>;
-        };
-    };
-}
+import { ApiError } from "@/hooks/use-api";
 
-export function backErrors(error: BackErrorResponse): void {
+export function backErrors(error: ApiError): void {
     document.querySelectorAll('.error-p').forEach((el) => {
         el.innerHTML = '';
     });
 
     if (error.status === 422) {
-        const entries = Object.entries(error.response.data.errors as Record<string, string[]>);
+        const entries = Object.entries(error.errors as Record<string, string[]>);
         for (const [key, messages] of entries) {
             const normalizedKey = key.replace('.', '-');
             const p = document.querySelector(`.${normalizedKey}-error`);

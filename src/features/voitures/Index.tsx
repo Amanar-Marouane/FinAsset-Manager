@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { Car } from "@/types";
 import { decodeHtmlEntities } from "@/utils/html-utils";
@@ -32,12 +32,12 @@ const Index = () => {
     const { showError } = useAppContext();
 
     const handleDelete = async (id: string | number): Promise<void> => {
-        const { error } = await trigger(ROUTES.cars.delete(id), { method: 'delete' });
-
-        if (error) {
-            showError((error as any).response?.data?.message || 'Erreur lors de la suppression de la voiture');
-        } else {
+        try {
+            await trigger(ROUTES.cars.delete(id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression de la voiture');
         }
     };
 
@@ -173,20 +173,17 @@ const CarForm = ({ onSuccess, initialData }: { onSuccess: () => void, initialDat
                 price: values.price ? parseFloat(values.price) : null,
             };
 
-            let response, error;
             if (initialData) {
-                ({ data: response, error } = await trigger(ROUTES.cars.update(initialData.id), { method: 'put', data: payload }));
+                await trigger(ROUTES.cars.update(initialData.id), { method: 'put', data: payload });
             } else {
-                ({ data: response, error } = await trigger(ROUTES.cars.store, { method: 'post', data: payload }));
+                await trigger(ROUTES.cars.store, { method: 'post', data: payload });
             }
 
-            if (response) {
-                showSuccess(initialData ? 'Voiture modifiée' : 'Voiture ajoutée');
-                onSuccess();
-            }
-            if (error) {
-                showError((error as any).response?.data?.message || 'Erreur lors de l\'enregistrement');
-            }
+            showSuccess(initialData ? 'Voiture modifiée' : 'Voiture ajoutée');
+            onSuccess();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de l\'enregistrement');
         } finally {
             setIsSubmitting(false);
         }

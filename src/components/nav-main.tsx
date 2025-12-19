@@ -1,6 +1,7 @@
 'use client';
 
 import { IconChevronRight } from '@tabler/icons-react';
+import { ReactNode } from 'react';
 
 import {
   Collapsible,
@@ -18,7 +19,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
-import { Icon } from '@/components/icons';
 
 export function NavMain({
   items
@@ -26,7 +26,7 @@ export function NavMain({
   items: {
     title: string;
     url: string;
-    icon?: Icon;
+    icon?: ReactNode;
     isActive?: boolean;
     items?: {
       title: string;
@@ -52,7 +52,7 @@ export function NavMain({
                     tooltip={item.title}
                     className='text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground min-w-8 duration-200 ease-linear'
                   >
-                    {item.icon && <item.icon />}
+                    {item.icon}
                     <span>{item.title}</span>
                     <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                   </SidebarMenuButton>

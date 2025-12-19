@@ -28,6 +28,7 @@ export const ROUTES = {
     edit: (id: string | number) => `/${CURRENT_VERSION}/building-types/edit/${id}`,
     update: (id: string | number) => `/${CURRENT_VERSION}/building-types/update/${id}`,
     show: (id: string | number) => `/${CURRENT_VERSION}/building-types/show/${id}`,
+    delete: (id: string | number) => `/${CURRENT_VERSION}/building-types/delete/${id}`,
   },
   cars: {
     index: `/${CURRENT_VERSION}/cars`,

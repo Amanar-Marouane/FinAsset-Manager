@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { Pret } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,12 +31,12 @@ const Index = () => {
     const { showError } = useAppContext();
 
     const handleDelete = async (id: string | number): Promise<void> => {
-        const { error } = await trigger(ROUTES.prets.delete(id), { method: 'delete' });
-
-        if (error) {
-            showError((error as any).response?.data?.message || 'Erreur lors de la suppression du prêt');
-        } else {
+        try {
+            await trigger(ROUTES.prets.delete(id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression du prêt');
         }
     };
 
@@ -176,20 +176,17 @@ const PretForm = ({ onSuccess, initialData }: { onSuccess: () => void, initialDa
                 monthly_payment: values.monthly_payment || null,
             };
 
-            let response, error;
             if (initialData) {
-                ({ data: response, error } = await trigger(ROUTES.prets.update(initialData.id), { method: 'put', data: payload }));
+                await trigger(ROUTES.prets.update(initialData.id), { method: 'put', data: payload });
             } else {
-                ({ data: response, error } = await trigger(ROUTES.prets.store, { method: 'post', data: payload }));
+                await trigger(ROUTES.prets.store, { method: 'post', data: payload });
             }
 
-            if (response) {
-                showSuccess(initialData ? 'Prêt modifié' : 'Prêt ajouté');
-                onSuccess();
-            }
-            if (error) {
-                showError((error as any).response?.data?.message || 'Erreur lors de l\'enregistrement');
-            }
+            showSuccess(initialData ? 'Prêt modifié' : 'Prêt ajouté');
+            onSuccess();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de l\'enregistrement');
         } finally {
             setIsSubmitting(false);
         }

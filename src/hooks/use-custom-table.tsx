@@ -7,7 +7,7 @@ import {
   CustomTableTableState
 } from '@/components/custom/data-table/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import useApi from "./use-api";
+import useApi, { ApiError } from "./use-api";
 
 export interface PaginationResponse<T = unknown> {
   data: T[];
@@ -85,27 +85,26 @@ export const useCustomTable = <
       sortDir: currentState.sortDir,
     };
 
-    const { data, error } = await trigger(url, {
-      data: config,
-    });
+    try {
+      const response = await trigger<PaginationResponse<T>>(url, {
+        data: config,
+      });
 
-    if (error) {
-      setState((prev) => ({ ...prev, error: error?.message, loading: false }));
-      return;
-    }
+      const resData = ((response as any)?.data ?? response) as PaginationResponse<T>;
 
-    if (data !== null && data !== undefined) {
-      const resData = data as PaginationResponse<T>;
       setState((prev) => ({
         ...prev,
-        data: resData.data as T[],
-        pages: Math.ceil(resData.recordsFiltered / currentState.rowsPerPage),
-        recordCount: resData.recordsTotal,
+        data: (resData.data as T[]) ?? [],
+        pages: Math.ceil((resData.recordsFiltered ?? 0) / currentState.rowsPerPage),
+        recordCount: resData.recordsTotal ?? 0,
         loading: false,
         selectedRows: prev.selectedRows.filter((selected: T) =>
-          (resData.data as T[]).some((newRow: T) => newRow.id === selected.id)
+          ((resData.data as T[]) ?? []).some((newRow: T) => newRow.id === selected.id)
         ),
       }));
+    } catch (e) {
+      const err = e as ApiError;
+      setState((prev) => ({ ...prev, error: err?.message || 'Erreur de chargement', loading: false }));
     }
   }, [url, preFilled]);
 

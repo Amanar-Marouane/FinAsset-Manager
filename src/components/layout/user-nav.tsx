@@ -51,7 +51,7 @@ export function UserNav({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className='w-56'
+          // className='w-56'
           align='end'
           sideOffset={10}
           forceMount

@@ -1,38 +1,37 @@
 'use client';
-import { useEffect, useState } from 'react';
-import useApi, { ApiResponse } from './use-api';
 import { ROUTES } from '@/constants/routes';
 import type { BuildingType } from '@/types';
+import { useEffect, useState } from 'react';
+import useApi, { ApiError, ApiResponse } from './use-api';
 
 interface UseBuildingTypesReturn {
     buildingTypes: BuildingType[];
     isLoading: boolean;
-    error: Error | null;
+    error: ApiError | null;
     refetch: () => Promise<void>;
 }
 
 const useBuildingTypes = (): UseBuildingTypesReturn => {
-    const { trigger, error: apiError } = useApi();
+    const { trigger } = useApi();
     const [buildingTypes, setBuildingTypes] = useState<BuildingType[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
+    const [error, setError] = useState<ApiError | null>(null);
 
     const fetchBuildingTypes = async () => {
         setIsLoading(true);
         setError(null);
 
-        const response = await trigger<ApiResponse<BuildingType[]>>(ROUTES.buildingTypes.all, {
-            method: 'get',
-        });
-
-        if (response.error) {
-            setError(new Error(apiError?.message || 'Failed to fetch building types'));
-            setBuildingTypes([]);
-        } else if (response.data) {
+        try {
+            const response = await trigger<ApiResponse<BuildingType[]>>(ROUTES.buildingTypes.all, {
+                method: 'get',
+            });
             setBuildingTypes(response.data?.data || []);
+        } catch (err) {
+            setError((err as ApiError));
+            setBuildingTypes([]);
+        } finally {
+            setIsLoading(false);
         }
-
-        setIsLoading(false);
     };
 
     useEffect(() => {

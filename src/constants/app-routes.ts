@@ -17,6 +17,9 @@ export const APP_ROUTES = {
     batiments: {
         index: `${PROTECTED_PREFIX}/batiments`,
     },
+    typesDeBatiments: {
+        index: `${PROTECTED_PREFIX}/types-de-batiments`,
+    },
     projets: {
         index: `${PROTECTED_PREFIX}/projets`,
     },

@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import useBuildingTypes from "@/hooks/use-building-types";
 import { BuildingType } from "@/types";
@@ -42,14 +42,12 @@ const Index = () => {
     const { showError } = useAppContext();
 
     const handleDelete = async (id: string | number): Promise<void> => {
-        const { error } = await trigger(ROUTES.buildings.delete(id), {
-            method: 'delete',
-        });
-
-        if (error) {
-            showError((error as any).response?.data?.message || 'Erreur lors de la suppression du bâtiment');
-        } else {
+        try {
+            await trigger(ROUTES.buildings.delete(id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression du bâtiment');
         }
     };
 
@@ -219,7 +217,7 @@ type CreateBuildingFormProps = {
     onSuccess?: () => void;
     data: {
         buildingTypes: BuildingType[],
-        error: Error | null,
+        error: ApiError | null,
         buildingTypesLoading: boolean
     };
 };
@@ -248,20 +246,16 @@ const CreateBuildingForm = ({ onSuccess, data }: CreateBuildingFormProps) => {
     const onSubmit = async (data: { name: string }) => {
         setIsSubmitting(true);
         try {
-            const { data: response, error } = await trigger(ROUTES.buildings.store, {
+            await trigger(ROUTES.buildings.store, {
                 method: 'post',
                 data
             });
-
-            if (response) {
-                showSuccess('Type de bâtiment créé avec succès');
-                form.reset();
-                onSuccess?.();
-            }
-
-            if (error) {
-                showError((error as any).response?.data?.message || 'Erreur lors de la création de la bâtiment');
-            }
+            showSuccess('Type de bâtiment créé avec succès');
+            form.reset();
+            onSuccess?.();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la création de la bâtiment');
         } finally {
             setIsSubmitting(false);
         }
@@ -355,7 +349,7 @@ type EditBuildingFormProps = {
     building: BuildingRow;
     data: {
         buildingTypes: BuildingType[],
-        error: Error | null,
+        error: ApiError | null,
         buildingTypesLoading: boolean
     };
 };
@@ -384,20 +378,16 @@ const EditBuildingForm = ({ onSuccess, building, data }: EditBuildingFormProps) 
     const onSubmit = async (data: { name: string }) => {
         setIsSubmitting(true);
         try {
-            const { data: response, error } = await trigger(ROUTES.buildings.update(building.id), {
+            await trigger(ROUTES.buildings.update(building.id), {
                 method: 'put',
                 data
             });
-
-            if (response) {
-                showSuccess('Type de bâtiment modifié avec succès');
-                form.reset();
-                onSuccess?.();
-            }
-
-            if (error) {
-                showError(error.response?.data?.message || 'Erreur lors de la modification du bâtiment');
-            }
+            showSuccess('Type de bâtiment modifié avec succès');
+            form.reset();
+            onSuccess?.();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la modification du bâtiment');
         } finally {
             setIsSubmitting(false);
         }
@@ -487,77 +477,3 @@ const EditBuildingForm = ({ onSuccess, building, data }: EditBuildingFormProps) 
 }
 
 export default Index
-
-// this is form for batiment type creation
-// const CreateBuildingForm = ({ onSuccess }: { onSuccess?: () => void }) => {
-//     const [isSubmitting, setIsSubmitting] = useState(false);
-//     const { trigger } = useApi();
-//     const { buildingTypes, error, isLoading: buildingTypesLoading } = useBuildingTypes();
-//     // const { showError, showSuccess } = useContext(AppContext);
-//     if (error) {
-//         return <UnexpectedError />;
-//     }
-
-//     const form = useForm({
-//         resolver: zodResolver(zod.object({
-//             name: zod.string().min(1, { message: 'Le nom est requis' }).max(255, { message: 'Le nom ne doit pas dépasser 255 caractères' }),
-//         })),
-//         defaultValues: {
-//             name: '',
-//         }
-//     });
-
-//     const onSubmit = async (data: { name: string }) => {
-//         setIsSubmitting(true);
-//         try {
-//             const { data: response, error } = await trigger(ROUTES.buildingTypes.store, {
-//                 method: 'POST',
-//                 data
-//             });
-
-//             if (response) {
-//                 // showSuccess('Type de bâtiment créé avec succès');
-//                 form.reset();
-//                 // onSuccess?.(); // This will call table reload and close dialog
-//             }
-
-//             if (error) {
-//                 // showError(error.response?.data?.message || 'Erreur lors de la création de la ville');
-//             }
-//         } finally {
-//             setIsSubmitting(false);
-//         }
-//     };
-
-//     return (
-//         <Form {...form}>
-//             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-//                 <FormField
-//                     control={form.control}
-//                     name="name"
-//                     render={({ field }) => (
-//                         <FormItem>
-//                             <FormLabel>Nom de la type de bâtiment</FormLabel>
-//                             <FormControl>
-//                                 <Input
-//                                     placeholder="Entrez le nom de la type de bâtiment"
-//                                     {...field}
-//                                 />
-//                             </FormControl>
-//                             <FormMessage />
-//                         </FormItem>
-//                     )}
-//                 />
-
-//                 <div className="flex justify-end space-x-2">
-//                     <Button
-//                         type="submit"
-//                         disabled={isSubmitting || buildingTypesLoading}
-//                     >
-//                         {isSubmitting ? 'Création...' : 'Créer'}
-//                     </Button>
-//                 </div>
-//             </form>
-//         </Form>
-//     )
-// }

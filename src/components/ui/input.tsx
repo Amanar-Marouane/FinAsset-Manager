@@ -129,6 +129,10 @@ const Input: React.FC<InputProps> = ({
           </button>
         )}
       </div>
+
+      <div>
+        <p className={`text-destructive text-sm mt-1 error-p ${name}-error`}></p>
+      </div>
     </div>
   );
 };

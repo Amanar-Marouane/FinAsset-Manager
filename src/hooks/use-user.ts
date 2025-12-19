@@ -13,13 +13,12 @@ const useUser = () => {
   useEffect(() => {
     const checkAuth = async () => {
       setLoading(true);
-      const { data, error } = await trigger<{ data: { user: User | null; authenticated: boolean } }>(ROUTES.isLogged, { method: 'post' });
-
-      if (data) {
-        setClient(data.data.user || null);
-        setIsAuth(data.data.authenticated || false);
-      }
-      if (error) {
+      try {
+        const resp = await trigger<{ data: { user: User | null; authenticated: boolean } }>(ROUTES.isLogged, { method: 'post' });
+        const payload = resp?.data?.data;
+        setClient(payload?.user || null);
+        setIsAuth(payload?.authenticated || false);
+      } catch (_e) {
         setClient(null);
         setIsAuth(false);
       }

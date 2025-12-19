@@ -1,7 +1,8 @@
 'use client';
 
+import { useToast } from '@/components/ui/toast';
 import { ROUTES } from '@/constants/routes';
-import useApi from '@/hooks/use-api';
+import useApi, { ApiError } from '@/hooks/use-api';
 import useUser from '@/hooks/use-user';
 import { SafeString } from '@/utils/safe-string';
 import { createContext, JSX, ReactNode, useEffect, useState } from 'react';
@@ -61,6 +62,7 @@ const AppProvider = ({
   const [isLoading, setIsLoading] = useState(false);
   const { client, isAuth, loading } = useUser();
   const { trigger } = useApi();
+  const { toast } = useToast();
 
   useEffect(() => {
     setUser(client);
@@ -71,22 +73,22 @@ const AppProvider = ({
   // Toast message handlers
   const showSuccess = (msg: string): void => {
     setSuccessMessage(msg);
-    console.log('SUCCESS:', msg);
+    toast.success(msg);
   };
 
   const showError = (msg: string): void => {
     setErrorMessage(msg);
-    console.error('ERROR:', msg);
+    toast.error(msg);
   };
 
   const showWarning = (msg: string): void => {
     setWarningMessage(msg);
-    console.warn('WARNING:', msg);
+    toast.warning(msg);
   };
 
   const showInfo = (msg: string): void => {
     setInfoMessage(msg);
-    console.info('INFO:', msg);
+    toast.info(msg);
   };
 
   // General toast handler
@@ -148,7 +150,7 @@ const AppProvider = ({
     setIsLoading(true);
 
     try {
-      const { error, status } = await trigger(ROUTES.logout, { method: 'post' });
+      const { status } = await trigger(ROUTES.logout, { method: 'post' });
 
       if (status === 204) {
         setIsAuthenticated(false);
@@ -156,12 +158,11 @@ const AppProvider = ({
         showSuccess('Vous avez été déconnecté(e) avec succès');
         localStorage.removeItem('access-token');
         localStorage.removeItem('refresh-token');
-      } else if (error) {
-        showError(error?.response?.data?.message || 'Une erreur est survenue');
       }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      showError(SafeString(message, 'Logout failed'));
+    } catch (err) {
+      const error = err as ApiError;
+      const message = error.message || 'Échec de la déconnexion';
+      showError(message);
     } finally {
       setIsLoading(false);
     }
@@ -194,3 +195,4 @@ const AppProvider = ({
 };
 
 export default AppProvider;
+

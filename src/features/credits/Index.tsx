@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { Credit } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,12 +31,12 @@ const Index = () => {
     const { showError } = useAppContext();
 
     const handleDelete = async (id: string | number): Promise<void> => {
-        const { error } = await trigger(ROUTES.credits.delete(id), { method: 'delete' });
-
-        if (error) {
-            showError((error as any).response?.data?.message || 'Erreur lors de la suppression du crédit');
-        } else {
+        try {
+            await trigger(ROUTES.credits.delete(id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression du crédit');
         }
     };
 
@@ -181,20 +181,17 @@ const CreditForm = ({ onSuccess, initialData }: { onSuccess: () => void, initial
                 organization: values.organization || null,
             };
 
-            let response, error;
             if (initialData) {
-                ({ data: response, error } = await trigger(ROUTES.credits.update(initialData.id), { method: 'put', data: payload }));
+                await trigger(ROUTES.credits.update(initialData.id), { method: 'put', data: payload });
             } else {
-                ({ data: response, error } = await trigger(ROUTES.credits.store, { method: 'post', data: payload }));
+                await trigger(ROUTES.credits.store, { method: 'post', data: payload });
             }
 
-            if (response) {
-                showSuccess(initialData ? 'Crédit modifié' : 'Crédit ajouté');
-                onSuccess();
-            }
-            if (error) {
-                showError((error as any).response?.data?.message || 'Erreur lors de l\'enregistrement');
-            }
+            showSuccess(initialData ? 'Crédit modifié' : 'Crédit ajouté');
+            onSuccess();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de l\'enregistrement');
         } finally {
             setIsSubmitting(false);
         }

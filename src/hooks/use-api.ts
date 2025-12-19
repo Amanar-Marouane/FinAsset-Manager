@@ -12,33 +12,15 @@ export interface ApiOptions {
 
 export type ApiResponse<T> = {
   data?: T;
-  error?: {
-    response?: {
-      message?: string;
-      data?: {
-        message?: string;
-      };
-      status?: number;
-    };
-    message: string;
-  };
   message?: string;
   status: number;
-  httpStatus?: number;
 }
 
 export type ApiError = {
   message: string;
-  status?: number;
-  response?: {
-    message?: string;
-    data?: {
-      message?: string;
-    };
-    status?: number;
-  };
+  status: number;
+  errors?: Record<string, string[]>;
 };
-
 
 export interface UseApiReturn {
   trigger: <T = unknown>(url: string, options?: ApiOptions) => Promise<ApiResponse<T>>;
@@ -72,34 +54,34 @@ const useApi = (): UseApiReturn => {
       } else {
         response = await axiosInstance[method as 'post' | 'put' | 'patch']<T>(url, options.data, { headers: options.headers });
       }
+      console.log(response);
 
       const result: ApiResponse<T> = {
         data: response.data,
         status: response.status,
-        httpStatus: response.status,
       };
 
       setData(result);
       setStatus(response.status);
       return result;
     } catch (err) {
-      const axiosError = err as AxiosError;
-      const result: ApiResponse<T> = {
-        error: {
-          response: {
-            data: axiosError.response?.data as any,
-            status: axiosError.response?.status,
-          },
-          message: axiosError.message,
-        },
+      const axiosError = err as AxiosError<{
+        message?: string;
+        errors?: Record<string, string[]>;
+      }>;
+
+      const apiError: ApiError = {
+        message:
+          axiosError.response?.data?.message ??
+          axiosError.message ??
+          'Unexpected error',
         status: axiosError.response?.status ?? 500,
-        httpStatus: axiosError.response?.status,
+        errors: axiosError.response?.data?.errors,
       };
 
       setError(axiosError);
-      setData(result);
-      setStatus(axiosError.response?.status ?? null);
-      return result;
+      setStatus(apiError.status);
+      throw apiError;
     }
   };
 

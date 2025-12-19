@@ -1,4 +1,4 @@
-import useApi from './use-api';
+import useApi, { ApiError } from './use-api';
 import { ROUTES } from '@/constants/routes';
 import { BankAccount } from '@/types/bank-types';
 import { useEffect, useState } from 'react';
@@ -13,20 +13,13 @@ const useAllBankAccounts = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // Assuming index returns paginated, we might need 'all' endpoint or large limit
-            // For now, we try to fetch index. If your API supports pagination override, use it.
-            // e.g. ?length=100
-            const { data, error } = await trigger(`${ROUTES.bankAccounts.index}?length=100`, { method: 'get' });
-            if (error) {
-                setError(new Error('Failed to fetch accounts'));
-                return;
-            }
-            if (data) {
-                // @ts-expect-error - Handling loose API response type
-                setAccounts(Array.isArray(data) ? data : data?.data || []);
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err : new Error('Unknown error fetching accounts'));
+            const resp = await trigger(`${ROUTES.bankAccounts.index}?length=100`, { method: 'get' });
+            const root = (resp as any)?.data ?? resp;
+            const items = Array.isArray(root) ? root : (root?.data ?? []);
+            setAccounts(items || []);
+        } catch (e) {
+            const err = e as ApiError;
+            setError(new Error(err.message || 'Unknown error fetching accounts'));
         } finally {
             setIsLoading(false);
         }

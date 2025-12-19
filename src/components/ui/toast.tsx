@@ -98,7 +98,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, removeToast }) 
     if (toasts.length === 0) return null;
 
     return (
-        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+        <div className="fixed top-4 right-4 z-[9999] space-y-2 max-w-sm pointer-events-none">
             {toasts.map((toast) => (
                 <Toast key={toast.id} toast={toast} onRemove={() => removeToast(toast.id)} />
             ))}
@@ -111,48 +111,48 @@ const Toast: React.FC<ToastComponentProps> = ({ toast, onRemove }) => {
         const iconProps = { className: "h-5 w-5 shrink-0" };
         switch (type) {
             case 'success':
-                return <CheckCircle {...iconProps} className="h-5 w-5 shrink-0 text-green-500" />;
+                return <CheckCircle {...iconProps} className="h-5 w-5 shrink-0 text-green-600" />;
             case 'error':
-                return <AlertCircle {...iconProps} className="h-5 w-5 shrink-0 text-red-500" />;
+                return <AlertCircle {...iconProps} className="h-5 w-5 shrink-0 text-red-600" />;
             case 'warning':
-                return <AlertTriangle {...iconProps} className="h-5 w-5 shrink-0 text-yellow-500" />;
+                return <AlertTriangle {...iconProps} className="h-5 w-5 shrink-0 text-amber-600" />;
             case 'info':
             default:
-                return <Info {...iconProps} className="h-5 w-5 shrink-0 text-blue-500" />;
+                return <Info {...iconProps} className="h-5 w-5 shrink-0 text-blue-600" />;
         }
     };
 
     const getToastStyles = (type: ToastType): string => {
         switch (type) {
             case 'success':
-                return 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200';
+                return 'bg-green-50 border-green-300 text-green-900 dark:bg-green-900/95 dark:border-green-700 dark:text-green-100';
             case 'error':
-                return 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200';
+                return 'bg-red-50 border-red-300 text-red-900 dark:bg-red-900/95 dark:border-red-700 dark:text-red-100';
             case 'warning':
-                return 'border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200';
+                return 'bg-amber-50 border-amber-300 text-amber-900 dark:bg-amber-900/95 dark:border-amber-700 dark:text-amber-100';
             case 'info':
             default:
-                return 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-200';
+                return 'bg-blue-50 border-blue-300 text-blue-900 dark:bg-blue-900/95 dark:border-blue-700 dark:text-blue-100';
         }
     };
 
     return (
         <div
             className={cn(
-                "relative flex items-start gap-3 p-4 border rounded-lg shadow-lg animate-in slide-in-from-right-full duration-300",
+                "relative flex items-start gap-3 p-4 border rounded-lg shadow-2xl backdrop-blur-sm pointer-events-auto animate-in slide-in-from-right-full duration-300",
                 getToastStyles(toast.type)
             )}
         >
             {getIcon(toast.type)}
             <div className="flex-1 min-w-0">
                 {toast.title != null && (
-                    <p className="font-medium text-sm mb-1">{toast.title}</p>
+                    <p className="font-semibold text-sm mb-1">{toast.title}</p>
                 )}
-                <p className="text-sm">{toast.message}</p>
+                <p className="text-sm font-medium">{toast.message}</p>
             </div>
             <button
                 onClick={onRemove}
-                className="shrink-0 p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                className="shrink-0 p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/20 transition-colors pointer-events-auto"
             >
                 <X className="h-4 w-4" />
             </button>

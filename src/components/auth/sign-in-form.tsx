@@ -51,27 +51,23 @@ const SignInForm = () => {
         setIsLoading(true);
 
         try {
-            const { data, error } = await trigger<{ data: { user: User, access_token: string, refresh_token: string } }>(ROUTES.login, {
+            const resp = await trigger<{ data: { user: User, access_token: string, refresh_token: string } }>(ROUTES.login, {
                 method: 'post',
                 data: credentials,
             });
 
-            if (error) {
-                throw new Error(error.message || 'Login failed');
-            }
-
-            setUser(data?.data.user || null);
+            const payload = resp.data?.data;
+            setUser(payload?.user || null);
             setIsAuthenticated(true);
 
-            // Simulate storing tokens
-            localStorage.setItem('access-token', data?.data.access_token || 'fake-access-token');
-            localStorage.setItem('refresh-token', data?.data.refresh_token || 'fake-refresh-token');
+            localStorage.setItem('access-token', payload?.access_token || 'fake-access-token');
+            localStorage.setItem('refresh-token', payload?.refresh_token || 'fake-refresh-token');
 
             showSuccess('Login successful!');
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : String(err);
+            const apiErr = err as ApiError;
             setIsAuthenticated(false);
-            showError(SafeString(message, 'Login failed'));
+            showError(SafeString(apiErr?.message, 'Login failed'));
             throw err;
         } finally {
             setIsLoading(false);

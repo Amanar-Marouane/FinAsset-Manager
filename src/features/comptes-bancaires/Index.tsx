@@ -14,13 +14,13 @@ import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROUTES } from "@/constants/routes";
-import useApi from "@/hooks/use-api";
+import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import useBanks from "@/hooks/use-banks";
 import { BankAccount } from "@/types/bank-types";
 import { decodeHtmlEntities } from "@/utils/html-utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Plus, History } from "lucide-react";
+import { Edit, History, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
@@ -39,11 +39,12 @@ const Index = () => {
     const { banks, isLoading: banksLoading } = useBanks();
 
     const handleDelete = async (account: BankAccountRow): Promise<void> => {
-        const { error } = await trigger(ROUTES.bankAccounts.delete(account.id), { method: 'delete' });
-        if (error) {
-            showError(error.response?.data?.message || 'Erreur lors de la suppression du compte');
-        } else {
+        try {
+            await trigger(ROUTES.bankAccounts.delete(account.id), { method: 'delete' });
             tableInstance?.refresh();
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors de la suppression du compte bancaire');
         }
     };
 
@@ -161,7 +162,6 @@ const Index = () => {
                         {selectedAccount ? (
                             <EditBankAccountForm
                                 account={selectedAccount}
-                                banks={banks}
                                 onSuccess={() => {
                                     setEditDialogOpen(false);
                                     setSelectedAccount(null);
@@ -223,15 +223,13 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
                 initial_balance: Number(values.initial_balance),
                 bank_id: Number(values.bank_id)
             };
-            const { data: response, error } = await trigger(ROUTES.bankAccounts.store, { method: 'post', data: payload });
-            if (response) {
-                showSuccess('Compte créé avec succès');
-                form.reset();
-                onSuccess?.();
-            }
-            if (error) {
-                showError(error.response?.data?.message || 'Erreur lors de la création du compte');
-            }
+            await trigger(ROUTES.bankAccounts.store, { method: 'post', data: payload });
+            showSuccess('Compte créé avec succès');
+            form.reset();
+            onSuccess?.();
+        } catch (err) {
+            const error = err as ApiError;
+            showError(error.message || 'Erreur lors de la création du compte');
         } finally {
             setIsSubmitting(false);
         }
@@ -339,7 +337,7 @@ const editSchema = zod.object({
 
 type EditFormValues = zod.infer<typeof editSchema>;
 
-const EditBankAccountForm = ({ onSuccess, account, banks }: { onSuccess?: () => void; account: BankAccountRow; banks?: any[] }) => {
+const EditBankAccountForm = ({ onSuccess, account }: { onSuccess?: () => void; account: BankAccountRow }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
@@ -355,14 +353,12 @@ const EditBankAccountForm = ({ onSuccess, account, banks }: { onSuccess?: () => 
     const onSubmit = async (values: EditFormValues) => {
         setIsSubmitting(true);
         try {
-            const { data: response, error } = await trigger(ROUTES.bankAccounts.update(account.id), { method: 'put', data: values });
-            if (response) {
-                showSuccess('Compte mis à jour');
-                onSuccess?.();
-            }
-            if (error) {
-                showError(error.response?.data?.message || 'Erreur');
-            }
+            await trigger(ROUTES.bankAccounts.update(account.id), { method: 'put', data: values });
+            showSuccess('Compte mis à jour');
+            onSuccess?.();
+        } catch (err) {
+            const error = err as ApiError;
+            showError(error.message || 'Erreur lors de la mise à jour du compte');
         } finally {
             setIsSubmitting(false);
         }
