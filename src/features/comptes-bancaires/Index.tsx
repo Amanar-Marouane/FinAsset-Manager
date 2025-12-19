@@ -25,7 +25,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
 import { BalanceManager } from "./components/balance-manager";
-
 type BankAccountRow = BankAccount;
 
 const Index = () => {
@@ -33,15 +32,18 @@ const Index = () => {
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [balanceManagerOpen, setBalanceManagerOpen] = useState(false);
+    const [quickBalanceDialogOpen, setQuickBalanceDialogOpen] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<BankAccountRow | null>(null);
+    const [quickBalanceAmount, setQuickBalanceAmount] = useState<string>('');
     const { trigger } = useApi();
-    const { showError } = useAppContext();
+    const { showError, showSuccess } = useAppContext();
     const { banks, isLoading: banksLoading } = useBanks();
 
     const handleDelete = async (account: BankAccountRow): Promise<void> => {
         try {
             await trigger(ROUTES.bankAccounts.delete(account.id), { method: 'delete' });
             tableInstance?.refresh();
+            showSuccess('Compte bancaire supprimé avec succès');
         } catch (e) {
             const err = e as ApiError;
             showError(err.message || 'Erreur lors de la suppression du compte bancaire');
@@ -53,17 +55,39 @@ const Index = () => {
         setEditDialogOpen(true);
     };
 
+    const handleQuickBalanceSubmit = async () => {
+        if (!selectedAccount) return;
+        try {
+            await trigger(ROUTES.accountBalances.store, {
+                method: 'post',
+                data: {
+                    bank_account_id: selectedAccount.id,
+                    date: new Date().toISOString().slice(0, 7),
+                    amount: Number(quickBalanceAmount || 0),
+                }
+            });
+            showSuccess('Solde du mois courant enregistré');
+            setQuickBalanceDialogOpen(false);
+            setQuickBalanceAmount('');
+            tableInstance?.refresh();
+        } catch (err) {
+            const error = err as ApiError;
+            showError(error.message || 'Erreur lors de l’enregistrement du solde');
+        }
+    };
+
     const columns: CustomTableColumn<BankAccountRow>[] = [
-        { data: 'id', label: 'Réf', sortable: true },
         {
             data: 'bank',
             label: 'Banque',
             sortable: true,
             render: (v: any) => v?.name || '-'
         },
-        { data: 'account_number', label: 'Numéro de compte', sortable: true, render: (v: unknown) => decodeHtmlEntities(v) },
+        { data: 'account_name', label: 'Nom du compte', sortable: true, render: (v: unknown) => decodeHtmlEntities(v) },
+        { data: 'account_number', label: 'Numéro de compte', sortable: true, render: (v: unknown) => decodeHtmlEntities(v) === '' ? '-' : decodeHtmlEntities(v) },
         { data: 'currency', label: 'Devise', sortable: true },
-        { data: 'initial_balance', label: 'Solde Initial', sortable: true, render: (v: any) => `${v ?? 0} ` },
+        { data: 'last_inserted_balance', label: 'Dernier solde', sortable: true, render: (v: any) => `${v ?? 0} ` },
+        { data: 'last_inserted_balance_date', label: 'Date du dernier solde', sortable: true, render: (v: any) => `${v ?? '-'} ` },
         {
             data: 'actions',
             label: 'Actions',
@@ -91,6 +115,22 @@ const Index = () => {
                         <TooltipContent>Historique & Soldes</TooltipContent>
                     </Tooltip>
 
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="h-8 w-8 p-1.5"
+                                onClick={() => {
+                                    setSelectedAccount(row);
+                                    setQuickBalanceDialogOpen(true);
+                                }}
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Solde rapide</TooltipContent>
+                    </Tooltip>
+
                     <DeleteModal
                         id={row.id}
                         itemName="Compte bancaire"
@@ -103,6 +143,7 @@ const Index = () => {
     ];
 
     const filters: CustomTableFilterConfig[] = [
+        { field: 'account_name', label: 'Nom du compte', type: 'text' },
         { field: 'account_number', label: 'Numéro de compte', type: 'text' },
     ];
 
@@ -160,8 +201,10 @@ const Index = () => {
                             <DialogTitle>Modifier le compte</DialogTitle>
                         </DialogHeader>
                         {selectedAccount ? (
-                            <EditBankAccountForm
-                                account={selectedAccount}
+                            <CreateBankAccountForm
+                                banks={banks}
+                                loadingBanks={banksLoading}
+                                initialData={selectedAccount}
                                 onSuccess={() => {
                                     setEditDialogOpen(false);
                                     setSelectedAccount(null);
@@ -175,15 +218,43 @@ const Index = () => {
                 </Dialog>
 
                 <Dialog open={balanceManagerOpen} onOpenChange={setBalanceManagerOpen}>
-                    <DialogContent className="sm:max-w-7xl">
+                    <DialogContent className="w-screen sm:w-[90vw] lg:w-[85vw] xl:w-[60vw]">
                         <DialogHeader>
                             <DialogTitle>Gestion des Soldes - {selectedAccount?.bank?.name} {selectedAccount?.account_number}</DialogTitle>
                         </DialogHeader>
                         {selectedAccount ? (
-                            <BalanceManager accountId={selectedAccount.id} accountCurrency={selectedAccount.currency} />
+                            <BalanceManager accountId={selectedAccount.id} accountCurrency={selectedAccount.currency} onParentTableRefresh={() => tableInstance?.refresh()} />
                         ) : (
                             <UnexpectedError error={null} />
                         )}
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={quickBalanceDialogOpen} onOpenChange={(open) => { setQuickBalanceDialogOpen(open); if (!open) setQuickBalanceAmount(''); }}>
+                    <DialogContent className="sm:max-w-sm">
+                        <DialogHeader>
+                            <DialogTitle>Solde rapide - {selectedAccount?.account_number}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-3">
+                            <div className="text-sm text-muted-foreground">
+                                Mois courant : {new Date().toISOString().slice(0, 7)}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Montant</label>
+                                <Input
+                                    name="amount"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={quickBalanceAmount}
+                                    onChange={(e) => setQuickBalanceAmount(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                                <Button variant="outline" onClick={() => setQuickBalanceDialogOpen(false)}>Annuler</Button>
+                                <Button onClick={handleQuickBalanceSubmit}>Enregistrer</Button>
+                            </div>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
@@ -193,14 +264,14 @@ const Index = () => {
 
 const createSchema = zod.object({
     bank_id: zod.string().min(1, { message: 'La banque est requise' }),
-    account_number: zod.string().min(1, { message: 'Le numéro de compte est requis' }),
+    account_number: zod.string().optional(),
+    account_name: zod.string().min(1, { message: 'Le nom du compte est requis' }),
     currency: zod.string().min(1, { message: 'La devise est requise' }),
-    initial_balance: zod.string(),
 });
 
 type CreateFormValues = zod.infer<typeof createSchema>;
 
-const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?: () => void, banks: any[], loadingBanks: boolean }) => {
+const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks, initialData }: { onSuccess?: () => void, banks: any[], loadingBanks: boolean, initialData?: BankAccountRow }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
@@ -208,10 +279,10 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
     const form = useForm<CreateFormValues>({
         resolver: zodResolver(createSchema),
         defaultValues: {
-            bank_id: '',
-            account_number: '',
-            currency: 'USD',
-            initial_balance: '0'
+            bank_id: initialData ? initialData.bank_id.toString() : (banks.length > 0 ? banks[0].id.toString() : ''),
+            account_number: initialData?.account_number || '',
+            account_name: initialData?.account_name || '',
+            currency: initialData?.currency || 'MAD',
         }
     });
 
@@ -220,16 +291,20 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
         try {
             const payload = {
                 ...values,
-                initial_balance: Number(values.initial_balance),
                 bank_id: Number(values.bank_id)
             };
-            await trigger(ROUTES.bankAccounts.store, { method: 'post', data: payload });
-            showSuccess('Compte créé avec succès');
+            if (initialData) {
+                await trigger(ROUTES.bankAccounts.update(initialData.id), { method: 'put', data: payload });
+                showSuccess('Compte mis à jour avec succès');
+            } else {
+                await trigger(ROUTES.bankAccounts.store, { method: 'post', data: payload });
+                showSuccess('Compte créé avec succès');
+            }
             form.reset();
             onSuccess?.();
         } catch (err) {
             const error = err as ApiError;
-            showError(error.message || 'Erreur lors de la création du compte');
+            showError(error.message || 'Erreur lors de l\'opération');
         } finally {
             setIsSubmitting(false);
         }
@@ -238,35 +313,71 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    <FormField
+                        control={form.control}
+                        name="bank_id"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Banque</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Sélectionnez une banque" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {loadingBanks ? (
+                                            <SelectItem value="loading" disabled>Chargement...</SelectItem>
+                                        ) : (
+                                            banks.map((bank) => (
+                                                <SelectItem key={bank.id} value={bank.id.toString()}>
+                                                    {bank.name}
+                                                </SelectItem>
+                                            ))
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Devise</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="MAD" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="MAD">MAD (Dh)</SelectItem>
+                                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                                        <SelectItem value="USD">USD ($)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <FormField
                     control={form.control}
-                    name="bank_id"
+                    name="account_name"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Banque</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Sélectionnez une banque" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {loadingBanks ? (
-                                        <SelectItem value="loading" disabled>Chargement...</SelectItem>
-                                    ) : (
-                                        banks.map((bank) => (
-                                            <SelectItem key={bank.id} value={bank.id.toString()}>
-                                                {bank.name}
-                                            </SelectItem>
-                                        ))
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <FormLabel>Nom du Compte</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Nom du compte" {...field} />
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-
                 <FormField
                     control={form.control}
                     name="account_number"
@@ -274,139 +385,15 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
                         <FormItem>
                             <FormLabel>Numéro de Compte</FormLabel>
                             <FormControl>
-                                <Input placeholder="ACC-000-000" {...field} />
+                                <Input required={false} placeholder="ACC-000-000" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                    <FormField
-                        control={form.control}
-                        name="currency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Devise</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="USD" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="USD">USD ($)</SelectItem>
-                                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                                        <SelectItem value="MAD">MAD (Dh)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="initial_balance"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Solde Initial</FormLabel>
-                                <FormControl>
-                                    <Input type="number" step="0.01" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-
                 <div className="flex justify-end space-x-2">
                     <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Création...' : 'Créer'}
-                    </Button>
-                </div>
-            </form>
-        </Form>
-    );
-};
-
-const editSchema = zod.object({
-    account_number: zod.string().min(1, { message: 'Requis' }),
-    currency: zod.string().min(1, { message: 'Requis' }),
-});
-
-type EditFormValues = zod.infer<typeof editSchema>;
-
-const EditBankAccountForm = ({ onSuccess, account }: { onSuccess?: () => void; account: BankAccountRow }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { trigger } = useApi();
-    const { showError, showSuccess } = useAppContext();
-
-    const form = useForm<EditFormValues>({
-        resolver: zodResolver(editSchema),
-        defaultValues: {
-            account_number: account.account_number,
-            currency: account.currency
-        }
-    });
-
-    const onSubmit = async (values: EditFormValues) => {
-        setIsSubmitting(true);
-        try {
-            await trigger(ROUTES.bankAccounts.update(account.id), { method: 'put', data: values });
-            showSuccess('Compte mis à jour');
-            onSuccess?.();
-        } catch (err) {
-            const error = err as ApiError;
-            showError(error.message || 'Erreur lors de la mise à jour du compte');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                    <FormField
-                        control={form.control}
-                        name="account_number"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Numéro de Compte</FormLabel>
-                                <FormControl>
-                                    <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="currency"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Devise</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Devise" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="USD">USD ($)</SelectItem>
-                                        <SelectItem value="EUR">EUR (€)</SelectItem>
-                                        <SelectItem value="MAD">MAD (Dh)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <div className="flex justify-end space-x-2">
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Modification...' : 'Modifier'}
+                        {isSubmitting ? (initialData ? 'Modification...' : 'Création...') : (initialData ? 'Modifier' : 'Créer')}
                     </Button>
                 </div>
             </form>

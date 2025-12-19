@@ -69,28 +69,18 @@ export default function AccountBalanceList() {
                         </SelectContent>
                     </Select>
                 </div>
-                {selectedAccountDetails && (
-                    <div className="flex-1 p-4 bg-muted/50 rounded-lg flex justify-between items-center">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Solde Actuel</p>
-                            <p className="text-2xl font-bold">
-                                {new Intl.NumberFormat('fr-FR', { style: 'currency', currency: selectedAccountDetails.currency }).format(Number(selectedAccountDetails.initial_balance ?? 0))}
-                            </p>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {selectedAccountId ? (
                 // <div className="mt-6">
-                    <CustomTable
-                        columns={columns}
-                        url={tableUrl || ""}
-                        filters={[
-                            { field: 'date_from', label: 'Date début', type: 'date' },
-                            { field: 'date_to', label: 'Date fin', type: 'date' },
-                        ]}
-                    />
+                <CustomTable
+                    columns={columns}
+                    url={tableUrl || ""}
+                    filters={[
+                        { field: 'date_from', label: 'Date début', type: 'date' },
+                        { field: 'date_to', label: 'Date fin', type: 'date' },
+                    ]}
+                />
                 // </div>
             ) : (
                 <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-lg text-muted-foreground bg-muted/10">

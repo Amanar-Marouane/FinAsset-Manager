@@ -78,12 +78,12 @@ const DeleteModal = ({
         e.preventDefault();
 
         if (id == null) {
-            showToast('No item selected for deletion', 'error');
+            showToast("Aucun élément sélectionné pour la suppression", 'error');
             return;
         }
 
         if (!onDelete) {
-            showToast('Delete handler not provided', 'error');
+            showToast('Aucun gestionnaire de suppression fourni', 'error');
             return;
         }
 
@@ -91,7 +91,6 @@ const DeleteModal = ({
 
         try {
             await onDelete(id);
-            showToast(`${itemName} deleted successfully`, 'success');
             setOpen(false);
             onSuccess?.();
         } catch (error: unknown) {
@@ -124,11 +123,11 @@ const DeleteModal = ({
                         <TooltipTrigger asChild>
                             <Button
                                 variant="destructive"
-                                className={`h-8 w-8 bg-red-100 p-1.5 text-red-600 hover:bg-red-200 ${className}`}
+                                className={`h-8 w-8 bg-red-100 p-1.5 text-red-700 hover:bg-red-100 hover:text-red-600 ${className}`}
                                 onClick={() => setOpen(true)}
                                 disabled={isButtonDisabled}
                             >
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                                <Trash2 className="h-4 w-4 text-current" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent

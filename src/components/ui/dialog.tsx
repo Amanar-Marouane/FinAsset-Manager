@@ -58,7 +58,7 @@ function DialogContent({
         data-slot='dialog-content'
         className={cn(
           // responsive container: mobile full width, scrollable, comfy padding
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 grid w-[95vw] sm:w-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 rounded-lg border p-4 sm:p-6 shadow-lg duration-200 sm:max-w-2xl',
+          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-1/2 left-1/2 z-50 grid w-[95vw] sm:w-auto max-h-[90vh] translate-x-[-50%] translate-y-[-50%] overflow-y-auto gap-4 rounded-lg border p-4 sm:p-6 shadow-lg duration-200',
           className
         )}
         {...props}

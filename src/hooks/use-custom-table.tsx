@@ -54,7 +54,8 @@ export const useCustomTable = <
   columns: CustomTableColumn<T>[],
   bulkActions: CustomTableBulkAction<T>[] = [],
   preFilled: Partial<Record<string, unknown>> = {},
-  initialState: Partial<CustomTableTableState<T>> = {}
+  initialState: Partial<CustomTableTableState<T>> = {},
+  rowsPerPage?: number,
 ): UseCustomTableReturn<T> => {
   const [state, setState] = useState<CustomTableTableState<T>>({
     data: [],
@@ -62,7 +63,7 @@ export const useCustomTable = <
     error: null,
     pages: 0,
     currentPage: 0,
-    rowsPerPage: 10,
+    rowsPerPage: rowsPerPage ?? 10,
     recordCount: 0,
     sortBy: null,
     sortDir: 'desc',
@@ -77,12 +78,12 @@ export const useCustomTable = <
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     const config = {
-      ...preFilled,
-      ...currentState.filters,
       start: currentState.currentPage * currentState.rowsPerPage,
       length: currentState.rowsPerPage,
       sortBy: currentState.sortBy,
       sortDir: currentState.sortDir,
+      ...currentState.filters,
+      ...preFilled,
     };
 
     try {

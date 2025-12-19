@@ -24,7 +24,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarRail
+  SidebarRail,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { navItems } from '@/constants/data';
 import { User } from '@/contexts/AppProvider';
@@ -64,29 +65,48 @@ export default function AppSidebar({
   const pathname = usePathname();
   const { user, logout } = useAppContext();
 
-  const UserAvatarProfile = ({ user = null, className = "", showInfo = false }: { user: User | null, className: string, showInfo: boolean }) => (
-    <div className={`flex items-center gap-2 w-full ${className}`}>
-      <div className="h-8 w-8 rounded-full bg-background flex items-center justify-center text-secondary-foreground text-sm font-semibold">
-        {user?.avatar ? (
-          <Image
-            src={user.avatar}
-            alt={user.name}
-            width={32}
-            height={32}
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          user?.name?.charAt(0)?.toUpperCase() || "U"
+  const UserAvatarProfile = ({
+    user = null,
+    className = "",
+    showInfo = false
+  }: {
+    user: User | null;
+    className?: string;
+    showInfo?: boolean;
+  }) => {
+    const { state } = useSidebar();
+    const isCollapsed = state === "collapsed";
+
+    return (
+      <div className={`flex items-center gap-2 w-full ${className}`}>
+        {/* Avatar ALWAYS visible */}
+        <div className="h-8 w-8 shrink-0 rounded-full bg-background flex items-center text-secondary-foreground justify-center text-sm font-semibold overflow-hidden">
+          {user?.avatar ? (
+            <Image
+              src={user.avatar}
+              alt={user.name}
+              width={32}
+              height={32}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            user?.name?.charAt(0)?.toUpperCase() || "U"
+          )}
+        </div>
+
+        {showInfo && (
+          <div className="min-w-0 text-left">
+            <div className="truncate text-sm font-semibold">
+              {user?.name || "User"}
+            </div>
+            <div className="truncate text-xs text-muted-foreground">
+              {user?.email || ""}
+            </div>
+          </div>
         )}
       </div>
-      {showInfo && (
-        <div className="text-left text-sm w-full">
-          <div className="font-semibold">{user?.name || "User"}</div>
-          <div className="text-xs text-muted-foreground">{user?.email || "Loading..."}</div>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
     <Sidebar

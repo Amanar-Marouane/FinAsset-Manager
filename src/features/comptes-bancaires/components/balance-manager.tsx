@@ -1,4 +1,4 @@
-import { CustomTableColumn } from "@/components/custom/data-table/types";
+import { CustomTableColumn, UseCustomTableReturnType } from "@/components/custom/data-table/types";
 import DeleteModal from "@/components/modal/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,9 +8,9 @@ import CustomTable from "@/components/ui/table/custom-table";
 import { ROUTES } from "@/constants/routes";
 import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
-import { AccountBalance } from "@/types/bank-types";
+import { AccountBalance, BankAccount } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Plus, Trash } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
@@ -30,7 +30,7 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
     const form = useForm<BalanceFormValues>({
         resolver: zodResolver(balanceSchema),
         defaultValues: {
-            date: initialData?.date || new Date().toISOString().split('T')[0],
+            date: initialData?.date || new Date().toISOString().slice(0, 7),
             amount: initialData?.amount || '',
         }
     });
@@ -66,7 +66,7 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
                         <FormItem>
                             <FormLabel>Date</FormLabel>
                             <FormControl>
-                                <Input type="date" {...field} />
+                                <Input type="month" {...field} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -96,12 +96,15 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
     );
 };
 
-export const BalanceManager = ({ accountId, accountCurrency }: { accountId: number, accountCurrency: string }) => {
+export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefresh }: { accountId: number, accountCurrency: string, onParentTableRefresh?: () => void; }) => {
     const [createOpen, setCreateOpen] = useState(false);
     const [editBalance, setEditBalance] = useState<AccountBalance | null>(null);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
     const [refreshKey, setRefreshKey] = useState(0);
+    const [selectedYear, setSelectedYear] = useState<string>('all');
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
 
     const refreshTable = () => setRefreshKey(k => k + 1);
 
@@ -148,28 +151,42 @@ export const BalanceManager = ({ accountId, accountCurrency }: { accountId: numb
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">Historique des soldes</h3>
-                <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-                    <DialogTrigger asChild>
-                        <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nouveau Solde</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Ajouter un solde mensuel</DialogTitle>
-                        </DialogHeader>
-                        <BalanceForm
-                            accountId={accountId}
-                            onSuccess={() => { setCreateOpen(false); refreshTable(); }}
-                            onCancel={() => setCreateOpen(false)}
-                        />
-                    </DialogContent>
-                </Dialog>
+                <div className="flex items-center gap-3">
+                    <select
+                        className="h-9 rounded-md border px-3 text-sm"
+                        value={selectedYear}
+                        onChange={(e) => { setSelectedYear(e.target.value); refreshTable(); }}
+                    >
+                        <option value="all">Toutes les années</option>
+                        {years.map((y) => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+                    <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nouveau Solde</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Ajouter un solde mensuel</DialogTitle>
+                            </DialogHeader>
+                            <BalanceForm
+                                accountId={accountId}
+                                onSuccess={() => { setCreateOpen(false); refreshTable(); onParentTableRefresh?.(); }}
+                                onCancel={() => setCreateOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
-            <div className="h-[500px] w-full flex flex-col relative overflow-hidden">
+            <div className="w-full flex flex-col">
                 <CustomTable
                     key={refreshKey}
                     columns={columns}
-                    url={`${ROUTES.accountBalances.index}?account_id=${accountId}`}
+                    url={`${ROUTES.accountBalances.index}?account_id=${accountId}${selectedYear !== 'all' ? `&year=${selectedYear}` : ''}`}
+                    preFilled={{ length: 12 }}
+                    pageSizeOptions={[12, 25, 50, 100]}
                 />
             </div>
 
@@ -182,7 +199,11 @@ export const BalanceManager = ({ accountId, accountCurrency }: { accountId: numb
                         <BalanceForm
                             accountId={accountId}
                             initialData={editBalance}
-                            onSuccess={() => { setEditBalance(null); refreshTable(); }}
+                            onSuccess={() => {
+                                onParentTableRefresh?.();
+                                setEditBalance(null);
+                                refreshTable();
+                            }}
                             onCancel={() => setEditBalance(null)}
                         />
                     )}

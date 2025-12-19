@@ -11,9 +11,8 @@ export type BankAccount = {
     bank_id: number;
     bank?: Bank;
     account_number: string;
+    account_name: string;
     currency: string;
-    initial_balance: string;
-    solde?: string; // Derived or current balance
     created_at: string;
     updated_at: string;
 };

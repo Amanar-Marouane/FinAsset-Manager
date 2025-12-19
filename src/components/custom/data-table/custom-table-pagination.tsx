@@ -1,13 +1,10 @@
 import { UseCustomTableReturnType } from '@/components/custom/data-table/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { JSX } from 'react';
 
-const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { table: UseCustomTableReturnType<T> }): JSX.Element => {
-  const pageSizeOptions = [10, 25, 50, 100];
-
+const CustomTablePagination = <T extends Record<string, unknown>>({ table, pageSizeOptions = [10, 25, 50, 100] }: { table: UseCustomTableReturnType<T>, pageSizeOptions?: number[] }): JSX.Element => {
   return (
     <div className='flex flex-col gap-2.5'>
       <div className='flex w-full flex-col-reverse items-center justify-between gap-3 p-2 sm:flex-row sm:gap-6'>

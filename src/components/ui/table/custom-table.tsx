@@ -24,8 +24,9 @@ const CustomTable = <T extends { id: string | number }>({
   filters,
   bulkActions = [],
   onInit,
+  pageSizeOptions = [10, 25, 50, 100],
 }: CustomTableProps<T>): JSX.Element => {
-  const table = useCustomTable<T>(url, columns, bulkActions, preFilled);
+  const table = useCustomTable<T>(url, columns, bulkActions, preFilled, {}, pageSizeOptions[0] ?? 10);
   const [showBulkActions, setShowBulkActions] = useState(false);
 
   useEffect(() => {
@@ -94,7 +95,7 @@ const CustomTable = <T extends { id: string | number }>({
             )}
 
             <div
-              className={` flex overflow-hidden rounded-lg border ${table.loading && 'blur-sm'}`}
+              className={`flex rounded-lg border ${table.loading && 'blur-sm'}`}
             >
               <ScrollArea className='h-full w-full'>
                 <Table>
@@ -230,7 +231,7 @@ const CustomTable = <T extends { id: string | number }>({
               </ScrollArea>
             </div>
           </div>
-          <CustomTablePagination<T> table={table} />
+          <CustomTablePagination<T> table={table} pageSizeOptions={pageSizeOptions} />
         </>
       )}
     </div>

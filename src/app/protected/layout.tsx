@@ -18,8 +18,9 @@ export default function DashboardLayout({
                     <AppSidebar />
                     <SidebarInset>
                         <Header
+                            className='sm:hidden'
                             leftContent={
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 sm:hidden">
                                     <SidebarTrigger className="inline-flex items-center justify-center rounded-md border border-border px-2 py-1 text-sm" />
                                 </div>
                             }

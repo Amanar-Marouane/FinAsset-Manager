@@ -87,6 +87,7 @@ export interface CustomTableProps<T> {
   filters?: CustomTableFilterConfig[];
   sortBy?: keyof T;
   sortDir?: 'asc' | 'desc';
+  pageSizeOptions?: number[];
 }
 
 export interface UseTableReturn<T> extends CustomTableTableState<T> {
