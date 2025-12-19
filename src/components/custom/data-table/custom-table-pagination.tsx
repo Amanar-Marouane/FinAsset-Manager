@@ -10,12 +10,8 @@ const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { t
 
   return (
     <div className='flex flex-col gap-2.5'>
-      <div
-        className={cn(
-          'flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8'
-        )}
-      >
-        <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap'>
+      <div className='flex w-full flex-col-reverse items-center justify-between gap-3 p-2 sm:flex-row sm:gap-6'>
+        <div className='text-muted-foreground flex-1 text-sm whitespace-nowrap self-start sm:self-auto'>
           {table.selectedRows.length > 0 ? (
             <>
               {table.selectedRows.length} sur {table.data.length} lignes sélectionnées
@@ -24,9 +20,9 @@ const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { t
             <>{table.data.length} lignes au total</>
           )}
         </div>
-        <div className='flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8'>
-          <div className='flex items-center space-x-2'>
-            <p className='text-sm font-medium whitespace-nowrap'>
+        <div className='flex w-full flex-col-reverse items-center gap-3 sm:w-auto sm:flex-row sm:gap-6 lg:gap-8'>
+          <div className='flex items-center gap-2 w-full sm:w-auto'>
+            <p className='text-sm font-medium whitespace-nowrap hidden sm:block'>
               Rows per page
             </p>
             <Select
@@ -35,7 +31,7 @@ const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { t
                 table.setRowsPerPage(Number(value));
               }}
             >
-              <SelectTrigger className='h-8 w-[4.5rem] [&[data-size]]:h-8'>
+              <SelectTrigger className='h-8 w-full sm:w-[4.5rem] [&[data-size]]:h-8'>
                 <SelectValue placeholder={table.rowsPerPage} />
               </SelectTrigger>
               <SelectContent side='top'>
@@ -47,7 +43,7 @@ const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { t
               </SelectContent>
             </Select>
           </div>
-          <div className='flex items-center justify-center text-sm font-medium'>
+          <div className='flex items-center justify-center text-sm font-medium min-w-[8rem]'>
             Page {table.currentPage + 1} sur {table.pages || 1}
           </div>
           <div className='flex items-center space-x-2'>
@@ -95,7 +91,6 @@ const CustomTablePagination = <T extends Record<string, unknown>>({ table }: { t
         </div>
       </div>
     </div>
-
   );
 };
 

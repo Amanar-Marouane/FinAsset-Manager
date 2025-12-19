@@ -35,4 +35,7 @@ export const APP_ROUTES = {
     banques: {
         index: `${PROTECTED_PREFIX}/banques`,
     },
+    profil: {
+        index: `${PROTECTED_PREFIX}/profile`,
+    },
 };

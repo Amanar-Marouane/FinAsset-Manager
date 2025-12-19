@@ -73,22 +73,24 @@ function StatCard({
     trend?: 'up' | 'down' | 'neutral';
 }) {
     return (
-        <Card>
+        <Card className='gap-2 py-4'>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className='py-0'>
                 <div className="text-2xl font-bold">{value}</div>
-                {description && (
-                    <p className="text-xs text-muted-foreground mt-1">{description}</p>
-                )}
-                {trend && (
-                    <div className="flex items-center mt-2">
-                        {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-600 mr-1" />}
-                        {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-600 mr-1" />}
-                    </div>
-                )}
+                <div className='flex items-center gap-1'>
+                    {description && (
+                        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+                    )}
+                    {trend && (
+                        <div className="flex items-center mt-2">
+                            {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-600 mr-1" />}
+                            {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-600 mr-1" />}
+                        </div>
+                    )}
+                </div>
             </CardContent>
         </Card>
     );
@@ -146,7 +148,6 @@ export default function Page(): React.JSX.Element {
                     setMetrics(null);
                 }
             } catch (e) {
-                console.error('Error fetching dashboard metrics:', (e as ApiError)?.message || e);
                 setMetrics(null);
             } finally {
                 setLoading(false);

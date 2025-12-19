@@ -85,16 +85,16 @@ const Index = () => {
     return (
         <PageContainer scrollable={false}>
             <div className="w-full flex flex-col space-y-4">
-                <div className="flex justify-between items-center px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 md:px-6">
                     <Heading title='Vos Voitures' />
                     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button className="w-full sm:w-auto">
                                 <Plus className='h-4 w-4 mr-2' />
                                 Nouvelle Voiture
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Ajouter une voiture</DialogTitle>
                             </DialogHeader>
@@ -110,7 +110,7 @@ const Index = () => {
 
                 <Separator className='mb-2' />
 
-                <div className="flex flex-1 flex-col space-y-4 px-6">
+                <div className="flex flex-1 flex-col space-y-4 px-3 md:px-6">
                     <CustomTable
                         columns={columns}
                         url={ROUTES.cars.index}
@@ -120,7 +120,7 @@ const Index = () => {
                 </div>
 
                 <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Modifier la voiture</DialogTitle>
                         </DialogHeader>
@@ -192,7 +192,7 @@ const CarForm = ({ onSuccess, initialData }: { onSuccess: () => void, initialDat
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     <FormField
                         control={form.control}
                         name="name"
@@ -216,7 +216,7 @@ const CarForm = ({ onSuccess, initialData }: { onSuccess: () => void, initialDat
                         )}
                     />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     <FormField
                         control={form.control}
                         name="price"

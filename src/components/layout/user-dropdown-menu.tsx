@@ -25,6 +25,11 @@ interface UserDropdownMenuProps {
 
 const SideItems: NavItem[] = [
     {
+        title: 'Profil',
+        url: APP_ROUTES.profil.index,
+        icon: 'IconUser',
+    },
+    {
         title: 'Types de Bâtiments',
         url: APP_ROUTES.typesDeBatiments.index,
         icon: 'IconBuildingCommunity',
@@ -52,36 +57,38 @@ export function UserDropdownMenu({
 
     return (
         <>
-            {
-                SideItems.map((item) => {
-                    const Icon = (item.icon && item.icon in iconMap)
-                        ? iconMap[item.icon as keyof typeof iconMap]
-                        : Icons.dashboard;
+            <div className='space-y-2'>
+                {
+                    SideItems.map((item) => {
+                        const Icon = (item.icon && item.icon in iconMap)
+                            ? iconMap[item.icon as keyof typeof iconMap]
+                            : Icons.dashboard;
 
-                    return (
-                        <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild tooltip={item.title}>
-                                <Link
-                                    href={item.url}
-                                    className="bg-primary flex items-center justify-left gap-2 rounded-md text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                                >
-                                    <Icon className="h-5 w-5 shrink-0" />
-                                    <span className="text-sm font-medium">
-                                        {item.title}
-                                    </span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    );
-                })
-            }
-            <DropdownMenuItem
-                onClick={handleSignOut}
-                className={`bg-destructive text-white cursor-pointer focus:bg-destructive/90 focus:text-white ${signOutClassName}`}
-            >
-                <IconUser className="mr-2 h-4 w-4 stroke-white" />
-                Sign Out
-            </DropdownMenuItem>
+                        return (
+                            <SidebarMenuItem key={item.title} className='py-0'>
+                                <SidebarMenuButton asChild tooltip={item.title}>
+                                    <Link
+                                        href={item.url}
+                                        className="bg-primary flex items-center justify-left gap-2 rounded-md text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                                    >
+                                        <Icon className="h-5 w-5 shrink-0" />
+                                        <span className="text-sm font-medium">
+                                            {item.title}
+                                        </span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        );
+                    })
+                }
+                <DropdownMenuItem
+                    onClick={handleSignOut}
+                    className={`bg-destructive text-white cursor-pointer focus:bg-destructive/90 focus:text-white ${signOutClassName}`}
+                >
+                    <IconUser className="mr-2 h-4 w-4 stroke-white" />
+                    Sign Out
+                </DropdownMenuItem>
+            </div>
         </>
     );
 }

@@ -118,16 +118,16 @@ const Index = () => {
     return (
         <PageContainer scrollable={false}>
             <div className="w-full flex flex-col space-y-4">
-                <div className="flex justify-between mb-2 px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2 px-3 md:px-6">
                     <Heading title='Vos Comptes bancaires' />
                     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button className="w-full sm:w-auto">
                                 <Plus className='h-4 w-4 mr-2' />
                                 Nouveau compte
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Créer un compte bancaire</DialogTitle>
                             </DialogHeader>
@@ -155,7 +155,7 @@ const Index = () => {
                 </div>
 
                 <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Modifier le compte</DialogTitle>
                         </DialogHeader>
@@ -175,7 +175,7 @@ const Index = () => {
                 </Dialog>
 
                 <Dialog open={balanceManagerOpen} onOpenChange={setBalanceManagerOpen}>
-                    <DialogContent className="max-w-7xl">
+                    <DialogContent className="sm:max-w-7xl">
                         <DialogHeader>
                             <DialogTitle>Gestion des Soldes - {selectedAccount?.bank?.name} {selectedAccount?.account_number}</DialogTitle>
                         </DialogHeader>
@@ -281,7 +281,7 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks }: { onSuccess?:
                     )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                     <FormField
                         control={form.control}
                         name="currency"
@@ -367,41 +367,43 @@ const EditBankAccountForm = ({ onSuccess, account }: { onSuccess?: () => void; a
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="account_number"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Numéro de Compte</FormLabel>
-                            <FormControl>
-                                <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Devise</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                    <FormField
+                        control={form.control}
+                        name="account_number"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Numéro de Compte</FormLabel>
                                 <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Devise" />
-                                    </SelectTrigger>
+                                    <Input {...field} />
                                 </FormControl>
-                                <SelectContent>
-                                    <SelectItem value="USD">USD ($)</SelectItem>
-                                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                                    <SelectItem value="MAD">MAD (Dh)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Devise</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Devise" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="USD">USD ($)</SelectItem>
+                                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                                        <SelectItem value="MAD">MAD (Dh)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <div className="flex justify-end space-x-2">
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Modification...' : 'Modifier'}

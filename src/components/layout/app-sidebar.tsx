@@ -89,7 +89,11 @@ export default function AppSidebar({
   );
 
   return (
-    <Sidebar collapsible='icon' className={`bg-sidebar text-sidebar-foreground ${className}`}>
+    <Sidebar
+      collapsible='icon'
+      className={`bg-sidebar text-sidebar-foreground z-50 sm:z-auto ${className}`}
+      aria-label="Navigation latérale"
+    >
       <SidebarHeader className='flex items-center justify-between px-4'>
         <Link href={homeUrl}>
           <Image

@@ -54,7 +54,6 @@ const useApi = (): UseApiReturn => {
       } else {
         response = await axiosInstance[method as 'post' | 'put' | 'patch']<T>(url, options.data, { headers: options.headers });
       }
-      console.log(response);
 
       const result: ApiResponse<T> = {
         data: response.data,

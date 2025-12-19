@@ -132,7 +132,7 @@ export function DataTableSliderFilter<TData>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant='outline' size='sm' className='border-dashed'>
+        <Button variant='outline' size='sm' className='border-dashed w-full sm:w-auto'>
           {columnFilterValue ? (
             <div
               role='button'
@@ -160,7 +160,7 @@ export function DataTableSliderFilter<TData>({
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align='start' className='flex w-auto flex-col gap-4'>
+      <PopoverContent align='start' className='flex w-[90vw] sm:w-auto flex-col gap-4'>
         <div className='flex flex-col gap-3'>
           <p className='leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'>
             {title}

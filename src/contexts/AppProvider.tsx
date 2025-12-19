@@ -1,10 +1,12 @@
 'use client';
 
 import { useToast } from '@/components/ui/toast';
+import { APP_ROUTES } from '@/constants/app-routes';
 import { ROUTES } from '@/constants/routes';
 import useApi, { ApiError } from '@/hooks/use-api';
 import useUser from '@/hooks/use-user';
 import { SafeString } from '@/utils/safe-string';
+import { useRouter } from 'next/navigation';
 import { createContext, JSX, ReactNode, useEffect, useState } from 'react';
 
 export interface User {
@@ -63,6 +65,7 @@ const AppProvider = ({
   const { client, isAuth, loading } = useUser();
   const { trigger } = useApi();
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     setUser(client);
@@ -158,6 +161,7 @@ const AppProvider = ({
         showSuccess('Vous avez été déconnecté(e) avec succès');
         localStorage.removeItem('access-token');
         localStorage.removeItem('refresh-token');
+        router.replace(APP_ROUTES.signIn);
       }
     } catch (err) {
       const error = err as ApiError;

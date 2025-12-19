@@ -14,6 +14,7 @@ interface HeaderProps {
 }
 
 export default function Header({
+  leftContent,
   rightContent,
   className = '',
 }: HeaderProps) {
@@ -23,7 +24,9 @@ export default function Header({
     <header
       className={`flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 ${className}`}
     >
-      <div className='flex items-center gap-2 px-4'></div>
+      <div className='flex items-center gap-2 px-4'>
+        {leftContent}
+      </div>
 
       <div className='flex items-center gap-2 px-4'>
         {rightContent || <UserNav user={user} logout={logout} />}

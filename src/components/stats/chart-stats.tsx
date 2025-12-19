@@ -197,7 +197,6 @@ export default function ChartStats({
                 setData(fakeData);
             }
         } catch (err: unknown) {
-            console.error('Error fetching chart data:', err);
             const msg = err instanceof Error ? err.message : String(err);
             setError(msg || 'Failed to load data');
             // Fallback to fake data on error

@@ -83,16 +83,16 @@ const Index = () => {
     return (
         <PageContainer scrollable={false}>
             <div className="w-full flex flex-col space-y-4">
-                <div className="flex justify-between items-center px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 md:px-6">
                     <Heading title='Vos Terrains' />
                     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button className="w-full sm:w-auto">
                                 <Plus className='h-4 w-4 mr-2' />
                                 Nouveau Terrain
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Ajouter un terrain</DialogTitle>
                             </DialogHeader>
@@ -108,7 +108,7 @@ const Index = () => {
 
                 <Separator className='mb-2' />
 
-                <div className="flex flex-1 flex-col space-y-4 px-6">
+                <div className="flex flex-1 flex-col space-y-4 px-3 md:px-6">
                     <CustomTable
                         columns={columns}
                         url={ROUTES.terrains.index}
@@ -118,7 +118,7 @@ const Index = () => {
                 </div>
 
                 <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Modifier le terrain</DialogTitle>
                         </DialogHeader>

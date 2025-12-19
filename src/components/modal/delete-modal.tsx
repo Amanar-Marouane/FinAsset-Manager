@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAppContext } from '@/hooks/use-app-context';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -55,8 +56,6 @@ interface DeleteModalProps {
     isLoading?: boolean;
     disabled?: boolean;
     className?: string;
-    // Fallback props for when no handlers are provided
-    showToast?: (message: string, type: 'success' | 'error') => void;
 }
 
 const DeleteModal = ({
@@ -70,12 +69,10 @@ const DeleteModal = ({
     isLoading: externalLoading = false,
     disabled = false,
     className = "",
-    showToast = (message: string, type: 'success' | 'error') => {
-        console.log(`${type.toUpperCase()}: ${message}`);
-    }
 }: DeleteModalProps) => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [open, setOpen] = useState(false);
+    const { showToast } = useAppContext();
 
     const handleConfirmDelete = async (e: React.FormEvent) => {
         e.preventDefault();

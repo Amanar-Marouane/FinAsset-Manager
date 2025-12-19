@@ -8,7 +8,9 @@ export const ROUTES = {
   login: `${AUTH_URL}/sign-in`,
   logout: `${AUTH_URL}/sign-out`,
   forgotPassword: `${AUTH_URL}/forgot-password`,
+  changePassword: `${AUTH_URL}/change-password`,
   isLogged: `/is-logged`,
+  profile: `/${CURRENT_VERSION}/profile`,
 
   // ----- Protected Modules -----
   buildings: {

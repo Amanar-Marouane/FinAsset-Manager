@@ -2,7 +2,7 @@
 import KBar from '@/components/kbar';
 import AppSidebar from '@/components/layout/app-sidebar';
 import Header from '@/components/layout/header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import AppLayout from '@/layouts/app-layout';
 
 
@@ -14,10 +14,17 @@ export default function DashboardLayout({
     return (
         <AppLayout>
             <KBar>
-                <SidebarProvider defaultOpen={true}>
+                <SidebarProvider defaultOpen={false}>
                     <AppSidebar />
                     <SidebarInset>
-                        <Header />
+                        <Header
+                            leftContent={
+                                <div className="flex items-center gap-2 sm:hidden">
+                                    <SidebarTrigger className="inline-flex items-center justify-center rounded-md border border-border px-2 py-1 text-sm" />
+                                    <span className="text-sm font-medium">Menu</span>
+                                </div>
+                            }
+                        />
                         {children}
                     </SidebarInset>
                 </SidebarProvider>

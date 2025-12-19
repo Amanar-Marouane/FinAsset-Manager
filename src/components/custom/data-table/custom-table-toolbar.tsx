@@ -119,7 +119,7 @@ export function CustomTableToolbar<TData extends Record<string, unknown>>({
                 placeholder={filter.label}
                 value={field.value || ''}
                 onChange={(e) => {
-                  const newValue = e;
+                  const newValue = e.target.value;
                   field.onChange(newValue);
                   filter.onChange?.(newValue, methods);
                 }}
@@ -358,12 +358,12 @@ export function CustomTableToolbar<TData extends Record<string, unknown>>({
       <div
         role='toolbar'
         aria-orientation='horizontal'
-        className={cn('flex w-full items-start justify-between gap-2 p-1', className)}
+        className={cn('flex w-full flex-col sm:flex-row items-start sm:items-end justify-between gap-2 p-2 sm:p-1', className)}
         {...props}
       >
-        <div className='flex justify-center gap-4'>
+        <div className='flex w-full flex-wrap items-start gap-2'>
           {filters.map((filter) => (
-            <div key={filter.field} className='relative'>
+            <div key={filter.field} className='relative w-full sm:w-auto'>
               {renderFilter(filter)}
             </div>
           ))}
@@ -373,7 +373,7 @@ export function CustomTableToolbar<TData extends Record<string, unknown>>({
               aria-label='Reset filters'
               variant='outline'
               size='sm'
-              className='border-dashed'
+              className='border-dashed w-full sm:w-auto'
               onClick={handleResetFilters}
             >
               <X className='mr-2 h-4 w-4' />
@@ -382,13 +382,19 @@ export function CustomTableToolbar<TData extends Record<string, unknown>>({
           )}
 
           {filters.length > 0 && (
-            <Button aria-label='Apply filters' size='sm' id="apply-filter" onClick={handleApplyFilters}>
+            <Button
+              aria-label='Apply filters'
+              size='sm'
+              id='apply-filter'
+              className='w-full sm:w-auto'
+              onClick={handleApplyFilters}
+            >
               Appliquer
             </Button>
           )}
         </div>
 
-        <div className='flex items-center gap-2'>
+        <div className='flex items-center gap-2 w-full sm:w-auto'>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -396,7 +402,7 @@ export function CustomTableToolbar<TData extends Record<string, unknown>>({
                 role='combobox'
                 variant='outline'
                 size='sm'
-                className='ml-auto hidden h-8 lg:flex'
+                className='ml-auto h-8 w-full sm:w-auto'
               >
                 <Settings2 className='mr-2 h-4 w-4' />
                 Colonnes

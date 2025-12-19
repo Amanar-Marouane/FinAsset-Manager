@@ -94,16 +94,16 @@ const Index = () => {
     return (
         <PageContainer scrollable={false}>
             <div className="w-full flex flex-col space-y-4">
-                <div className="flex justify-between items-center px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-3 md:px-6">
                     <Heading title='Vos Projets' />
                     <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button>
+                            <Button className="w-full sm:w-auto">
                                 <Plus className='h-4 w-4 mr-2' />
                                 Nouveau Projet
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md">
+                        <DialogContent className="sm:max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Ajouter un projet</DialogTitle>
                             </DialogHeader>
@@ -119,7 +119,7 @@ const Index = () => {
 
                 <Separator className='mb-2' />
 
-                <div className="flex flex-1 flex-col space-y-4 px-6">
+                <div className="flex flex-1 flex-col space-y-4 px-3 md:px-6">
                     <CustomTable
                         columns={columns}
                         url={ROUTES.projects.index}
@@ -129,7 +129,7 @@ const Index = () => {
                 </div>
 
                 <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Modifier le projet</DialogTitle>
                         </DialogHeader>
@@ -200,39 +200,43 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Nom</FormLabel>
-                            <FormControl><Input placeholder="Ex: Projet Immobilier" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="capital"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Capital</FormLabel>
-                            <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="net"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Net Mensuel</FormLabel>
-                            <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nom</FormLabel>
+                                <FormControl><Input placeholder="Ex: Projet Immobilier" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="capital"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Capital</FormLabel>
+                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                    <FormField
+                        control={form.control}
+                        name="net"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Net Mensuel</FormLabel>
+                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Enregistrement...' : 'Enregistrer'}</Button>
                 </div>
