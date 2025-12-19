@@ -19,9 +19,8 @@ export default function DashboardLayout({
                     <SidebarInset>
                         <Header
                             leftContent={
-                                <div className="flex items-center gap-2 sm:hidden">
+                                <div className="flex items-center gap-2">
                                     <SidebarTrigger className="inline-flex items-center justify-center rounded-md border border-border px-2 py-1 text-sm" />
-                                    <span className="text-sm font-medium">Menu</span>
                                 </div>
                             }
                         />
