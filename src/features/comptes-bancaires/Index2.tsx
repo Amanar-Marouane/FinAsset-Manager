@@ -154,7 +154,7 @@ const Index2 = () => {
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="table" className="mt-0">
+                    <TabsContent value="table" className="mt-0 w-full">
                         <AccountsTable
                             accounts={accounts}
                             year={selectedYear}

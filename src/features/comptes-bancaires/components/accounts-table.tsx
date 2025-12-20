@@ -1,19 +1,19 @@
 "use client"
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AccountBalance, BankAccountSchema } from "@/types/bank-types";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, Edit, History, Plus, Trash2, TrendingUp, TrendingDown, Minus, DollarSign } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger,
     DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AccountBalance, BankAccountSchema } from "@/types/bank-types";
+import { DollarSign, Edit, History, Minus, MoreVertical, Plus, Trash2, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OtherPersonMoneyForm } from "./other-person-money-form";
 
 interface AccountsTableProps {
@@ -66,10 +66,6 @@ export const AccountsTable = ({ accounts, year, onEdit, onBalanceManager, onQuic
 
     // Remove hard-coded values
     const otherOpening = null;
-    const otherMonths: Record<number, number | null> = months.reduce((acc, m) => {
-        acc[m] = null;
-        return acc;
-    }, {} as Record<number, number | null>);
 
     // Calculate monthly other person money totals
     const calculateOtherPersonMoneyTotal = (month: number): number | null => {
@@ -167,112 +163,114 @@ export const AccountsTable = ({ accounts, year, onEdit, onBalanceManager, onQuic
     const AUTO_TEXT = "text-[clamp(10px,2vw,14px)] leading-tight";
 
     return (
-        <div className="rounded-lg overflow-x-auto">
+        <div className="rounded-lg overflow-x-auto w-full flex flex-col items-center justify-center">
             {/* Main table with accounts and totals */}
-            <Table className="w-max border" style={{ minWidth: TABLE_MIN_W, tableLayout: 'fixed' }}>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="sticky border left-0 bg-background text-left" style={w(BANK_W)}>BQ</TableHead>
-                        <TableHead className="sticky border bg-background text-left" style={{ ...w(ACC_W), left: leftAccountCol }}>Compte</TableHead>
-                        <TableHead className="border text-right" style={w(OPEN_W)}>Solde d'ouverture</TableHead>
-                        {months.map((month) => (
-                            <TableHead key={month} className="border text-right" style={w(MONTH_W)}>
-                                {monthNames[month - 1]}
-                            </TableHead>
+            <div className="mt-4 rounded-md py-2">
+                <Table className="w-max border" style={{ minWidth: TABLE_MIN_W }}>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="sticky border left-0 bg-background text-left" style={w(BANK_W)}>BQ</TableHead>
+                            <TableHead className="sticky border bg-background text-left" style={{ ...w(ACC_W), left: leftAccountCol }}>Compte</TableHead>
+                            <TableHead className="border text-right" style={w(OPEN_W)}>Solde d'ouverture</TableHead>
+                            {months.map((month) => (
+                                <TableHead key={month} className="border text-right" style={w(MONTH_W)}>
+                                    {monthNames[month - 1]}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {accounts.map((account) => (
+                            <TableRow key={account.id}>
+                                <TableCell className="border sticky left-0 bg-background font-medium overflow-hidden" style={w(BANK_W)}>
+                                    <div className="truncate">
+                                        <span className={AUTO_TEXT}>{account.bank?.name || '—'}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="border sticky bg-background overflow-hidden" style={{ ...w(ACC_W), left: leftAccountCol }}>
+                                    <div className="flex items-center gap-2">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <span className={`cursor-help underline truncate flex-1 ${AUTO_TEXT}`}>
+                                                    {account.account_name || '—'}
+                                                </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent className={AUTO_TEXT}>{account.account_number || '—'}</TooltipContent>
+                                        </Tooltip>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-56">
+                                                <DropdownMenuItem onClick={() => onEdit(account)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    <span>Modifier</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onBalanceManager(account)}>
+                                                    <History className="mr-2 h-4 w-4" />
+                                                    <span>Historique & Soldes</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => onQuickBalance(account)}>
+                                                    <Plus className="mr-2 h-4 w-4" />
+                                                    <span>Solde rapide</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => {
+                                                    setSelectedAccountForOther(account);
+                                                    setOtherPersonMoneyDialogOpen(true);
+                                                }}>
+                                                    <DollarSign className="mr-2 h-4 w-4" />
+                                                    <span>Fonds d'autrui</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem onClick={() => onDelete(account)} className="text-red-600">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Supprimer</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="border text-right overflow-hidden" style={w(OPEN_W)}>
+                                    <div className="truncate">
+                                        <span className={AUTO_TEXT}>{account.previous_year_last_balance ? `${account.previous_year_last_balance} ${account.currency}` : '—'}</span>
+                                    </div>
+                                </TableCell>
+                                {months.map((month) => (
+                                    <TableCell key={`${account.id}-${month}`} className="border text-right font-mono text-sm overflow-hidden" style={w(MONTH_W)}>
+                                        <div className="truncate">
+                                            <span className={AUTO_TEXT}>{getBalanceForMonth(account.balances, month, account.currency)}</span>
+                                        </div>
+                                    </TableCell>
+                                ))}
+                            </TableRow>
                         ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {accounts.map((account) => (
-                        <TableRow key={account.id}>
-                            <TableCell className="border sticky left-0 bg-background font-medium overflow-hidden" style={w(BANK_W)}>
+                        {/* Totals row with currency */}
+                        <TableRow className="bg-muted/50 font-semibold">
+                            <TableCell className="sticky left-0 bg-muted/50 box-border border overflow-hidden" style={w(BANK_W)}>
                                 <div className="truncate">
-                                    <span className={AUTO_TEXT}>{account.bank?.name || '—'}</span>
+                                    <span className={AUTO_TEXT}>Total</span>
                                 </div>
                             </TableCell>
-                            <TableCell className="border sticky bg-background overflow-hidden" style={{ ...w(ACC_W), left: leftAccountCol }}>
-                                <div className="flex items-center gap-2">
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className={`cursor-help underline truncate flex-1 ${AUTO_TEXT}`}>
-                                                {account.account_name || '—'}
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent className={AUTO_TEXT}>{account.account_number || '—'}</TooltipContent>
-                                    </Tooltip>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0 flex-shrink-0">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-56">
-                                            <DropdownMenuItem onClick={() => onEdit(account)}>
-                                                <Edit className="mr-2 h-4 w-4" />
-                                                <span>Modifier</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onBalanceManager(account)}>
-                                                <History className="mr-2 h-4 w-4" />
-                                                <span>Historique & Soldes</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onQuickBalance(account)}>
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                <span>Solde rapide</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => {
-                                                setSelectedAccountForOther(account);
-                                                setOtherPersonMoneyDialogOpen(true);
-                                            }}>
-                                                <DollarSign className="mr-2 h-4 w-4" />
-                                                <span>Fonds d'autrui</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={() => onDelete(account)} className="text-red-600">
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Supprimer</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </TableCell>
+                            <TableCell className="border sticky bg-muted/50 overflow-hidden" style={{ ...w(ACC_W), left: leftAccountCol }}></TableCell>
                             <TableCell className="border text-right overflow-hidden" style={w(OPEN_W)}>
                                 <div className="truncate">
-                                    <span className={AUTO_TEXT}>{account.previous_year_last_balance ? `${account.previous_year_last_balance} ${account.currency}` : '—'}</span>
+                                    <span className={AUTO_TEXT}>{calculatePreviousYearTotal()}</span>
                                 </div>
                             </TableCell>
                             {months.map((month) => (
-                                <TableCell key={`${account.id}-${month}`} className="border text-right font-mono text-sm overflow-hidden" style={w(MONTH_W)}>
+                                <TableCell key={`total-${month}`} className="border text-right font-mono overflow-hidden" style={w(MONTH_W)}>
                                     <div className="truncate">
-                                        <span className={AUTO_TEXT}>{getBalanceForMonth(account.balances, month, account.currency)}</span>
+                                        <span className={AUTO_TEXT}>{calculateMonthTotal(month)}</span>
                                     </div>
                                 </TableCell>
                             ))}
                         </TableRow>
-                    ))}
-                    {/* Totals row with currency */}
-                    <TableRow className="bg-muted/50 font-semibold">
-                        <TableCell className="sticky left-0 bg-muted/50 box-border border overflow-hidden" style={w(BANK_W)}>
-                            <div className="truncate">
-                                <span className={AUTO_TEXT}>Total</span>
-                            </div>
-                        </TableCell>
-                        <TableCell className="border sticky bg-muted/50 overflow-hidden" style={{ ...w(ACC_W), left: leftAccountCol }}></TableCell>
-                        <TableCell className="border text-right overflow-hidden" style={w(OPEN_W)}>
-                            <div className="truncate">
-                                <span className={AUTO_TEXT}>{calculatePreviousYearTotal()}</span>
-                            </div>
-                        </TableCell>
-                        {months.map((month) => (
-                            <TableCell key={`total-${month}`} className="border text-right font-mono overflow-hidden" style={w(MONTH_W)}>
-                                <div className="truncate">
-                                    <span className={AUTO_TEXT}>{calculateMonthTotal(month)}</span>
-                                </div>
-                            </TableCell>
-                        ))}
-                    </TableRow>
-                </TableBody>
-            </Table>
+                    </TableBody>
+                </Table>
+            </div>
 
             {/* Argent d'autre personne — full border + currency */}
             <div className="mt-4 rounded-md py-2">
