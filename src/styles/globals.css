@@ -112,6 +112,15 @@
     background-color: var(--background);
     color: var(--foreground);
   }
+
+  /* Fix Recharts Legend Colors */
+  .recharts-legend-wrapper {
+    color: var(--foreground) !important;
+  }
+
+  .recharts-legend-item-text {
+    color: var(--foreground) !important;
+  }
 }
 
 ::view-transition-old(root),

@@ -10,10 +10,11 @@ import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import { AccountBalance, BankAccount } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Plus } from "lucide-react";
+import { Edit, Plus, DollarSign } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
+import { OtherPersonMoneyForm } from "./other-person-money-form";
 
 const balanceSchema = zod.object({
     date: zod.string().min(1, { message: 'Date requise' }),
@@ -99,20 +100,25 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
 export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefresh }: { accountId: number, accountCurrency: string, onParentTableRefresh?: () => void; }) => {
     const [createOpen, setCreateOpen] = useState(false);
     const [editBalance, setEditBalance] = useState<AccountBalance | null>(null);
+    const [otherPersonMoneyOpen, setOtherPersonMoneyOpen] = useState(false);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
     const [refreshKey, setRefreshKey] = useState(0);
-    const [selectedYear, setSelectedYear] = useState<string>('all');
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 5 }, (_, i) => (currentYear - i).toString());
+    const [selectedYear, setSelectedYear] = useState<string>(currentYear.toString());
 
-    const refreshTable = () => setRefreshKey(k => k + 1);
+    const refreshTable = () => {
+        setRefreshKey(k => k + 1);
+        onParentTableRefresh?.();
+    };
 
     const handleDelete = async (balance: AccountBalance) => {
         try {
             await trigger(ROUTES.accountBalances.delete(balance.id), { method: 'delete' });
             showSuccess('Solde supprimé');
             refreshTable();
+            onParentTableRefresh?.();
         } catch (e) {
             const err = e as ApiError;
             showError(err.message || 'Erreur lors de la suppression');
@@ -126,6 +132,12 @@ export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefres
             label: 'Solde',
             sortable: true,
             render: (val: any) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: accountCurrency }).format(Number(val))
+        },
+        {
+            data: 'other_person_money',
+            label: "Argent d'autre personne",
+            sortable: true,
+            render: (val: any) => val ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: accountCurrency }).format(Number(val)) : '—'
         },
         {
             data: 'actions',
@@ -162,6 +174,26 @@ export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefres
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
+                    <Dialog open={otherPersonMoneyOpen} onOpenChange={setOtherPersonMoneyOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm" variant="outline">
+                                <DollarSign className="h-4 w-4 mr-2" /> Fonds d'autrui
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Gérer les fonds d'autrui</DialogTitle>
+                            </DialogHeader>
+                            <OtherPersonMoneyForm
+                                accountId={accountId}
+                                onSuccess={() => {
+                                    setOtherPersonMoneyOpen(false);
+                                    refreshTable();
+                                }}
+                                onCancel={() => setOtherPersonMoneyOpen(false)}
+                            />
+                        </DialogContent>
+                    </Dialog>
                     <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nouveau Solde</Button>

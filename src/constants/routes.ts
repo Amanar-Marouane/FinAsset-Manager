@@ -90,6 +90,8 @@ export const ROUTES = {
   },
   bankAccounts: {
     index: `/${CURRENT_VERSION}/bank-accounts`,
+    all: `/${CURRENT_VERSION}/bank-accounts/all`,
+    byYear: (year: string | number) => `/${CURRENT_VERSION}/bank-accounts/year/${year}`,
     create: `/${CURRENT_VERSION}/bank-accounts/create`,
     store: `/${CURRENT_VERSION}/bank-accounts/store`,
     edit: (id: string | number) => `/${CURRENT_VERSION}/bank-accounts/edit/${id}`,
@@ -110,5 +112,7 @@ export const ROUTES = {
     store: `/${CURRENT_VERSION}/account-balances/store`,
     update: (id: string | number) => `/${CURRENT_VERSION}/account-balances/update/${id}`,
     delete: (id: string | number) => `/${CURRENT_VERSION}/account-balances/delete/${id}`,
+    insertOtherPersonMoney: `/${CURRENT_VERSION}/account-balances/insert-other-person-money`,
+    byDateAndAccountId: (id: string | number) => `/${CURRENT_VERSION}/account-balances/by-date-and-account-id/${id}`,
   },
 };
