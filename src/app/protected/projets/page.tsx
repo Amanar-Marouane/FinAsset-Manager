@@ -1,7 +1,8 @@
 'use client';
 
-import Index from "@/features/projects/Index";
+import Index2 from "@/features/projects/Index2";
 
 export default function Page() {
-    return <Index />;
+    return <Index2 />;
 }
+    

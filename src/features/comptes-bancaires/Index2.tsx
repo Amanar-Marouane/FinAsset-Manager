@@ -13,9 +13,9 @@ import { ROUTES } from "@/constants/routes";
 import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
 import useBanks from "@/hooks/use-banks";
-import { BankAccount, BankAccountSchema } from "@/types/bank-types";
+import { BankAccount, BankAccountSchema, OthersBalances } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, BarChart3, Table as TableIcon } from "lucide-react";
+import { Plus, BarChart3, Table as TableIcon, DollarSign } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
@@ -23,6 +23,8 @@ import { AccountsTable } from "./components/accounts-table";
 import { BalanceManager } from "./components/balance-manager";
 import { AccountsBalanceChart } from "./components/accounts-balance-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OtherPersonMoneyForm } from "./components/other-person-money-form";
+import OthersBalancesTable from "./components/others-balances-table";
 
 type BankAccountRow = BankAccount;
 
@@ -31,16 +33,22 @@ const Index2 = () => {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [balanceManagerOpen, setBalanceManagerOpen] = useState(false);
     const [quickBalanceDialogOpen, setQuickBalanceDialogOpen] = useState(false);
+    const [otherDialogOpen, setOtherDialogOpen] = useState(false);
+    const [othersTableOpen, setOthersTableOpen] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<BankAccountRow | null>(null);
+    const [selectedAccountForOther, setSelectedAccountForOther] = useState<BankAccountSchema | null>(null);
     const [quickBalanceAmount, setQuickBalanceAmount] = useState<string>('');
     const [activeTab, setActiveTab] = useState<string>("table");
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
     const { banks, isLoading: banksLoading } = useBanks();
     const [accounts, setAccounts] = useState<BankAccountSchema[]>([]);
+    const [othersBalances, setOthersBalances] = useState<OthersBalances[]>([]);
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState<number>(currentYear);
     const years = Array.from({ length: 7 }, (_, i) => currentYear - 3 + i);
+    const [othersTableRefreshKey, setOthersTableRefreshKey] = useState(0);
+    const [othersSelectedYear, setOthersSelectedYear] = useState<string | number>(currentYear);
 
     const fetchAccounts = async (yearParam?: number) => {
         const yearToFetch = yearParam ?? selectedYear;
@@ -53,14 +61,27 @@ const Index2 = () => {
         }
     };
 
+    const fetchOthersBalances = async (yearParam?: number) => {
+        const yearToFetch = yearParam ?? selectedYear;
+        try {
+            const response = await trigger<{ data: OthersBalances[] }>(ROUTES.othersBalances.byYear(yearToFetch));
+            setOthersBalances(response.data?.data || []);
+        } catch (e) {
+            const err = e as ApiError;
+            showError(err.message || 'Erreur lors du chargement des fonds d\'autrui');
+        }
+    };
+
     useEffect(() => {
         fetchAccounts(currentYear);
+        fetchOthersBalances(currentYear);
     }, []);
 
     const handleYearChange = (yearValue: string) => {
         const year = Number(yearValue);
         setSelectedYear(year);
         fetchAccounts(year);
+        fetchOthersBalances(year);
     };
 
     const handleDelete = async (account: BankAccountRow): Promise<void> => {
@@ -100,6 +121,14 @@ const Index2 = () => {
         }
     };
 
+    const openOtherDialog = () => {
+        if (!accounts.length) return;
+        setSelectedAccountForOther((prev) => prev ?? accounts[0]);
+        setOtherDialogOpen(true);
+    };
+
+    const refreshOthersTable = () => setOthersTableRefreshKey(k => k + 1);
+
     return (
         <PageContainer scrollable={false}>
             <div className="w-full flex flex-col space-y-4">
@@ -137,10 +166,66 @@ const Index2 = () => {
                                 />
                             </DialogContent>
                         </Dialog>
+                        <Button variant="outline" onClick={() => setOthersTableOpen(true)}>
+                            Historique fonds d'autrui
+                        </Button>
                     </div>
                 </div>
 
                 <Separator className='mb-2' />
+
+                {/* Dialog: Fonds d'autrui form */}
+                <Dialog open={otherDialogOpen} onOpenChange={setOtherDialogOpen}>
+                    <DialogContent className="sm:max-w-md space-y-3">
+                        <DialogHeader>
+                            <DialogTitle>Fonds d'autrui</DialogTitle>
+                        </DialogHeader>
+                        {selectedAccountForOther && (
+                            <OtherPersonMoneyForm
+                                accountId={selectedAccountForOther.id}
+                                othersBalances={othersBalances}
+                                onSuccess={() => {
+                                    setOtherDialogOpen(false);
+                                    fetchAccounts(selectedYear);
+                                    fetchOthersBalances(selectedYear);
+                                    refreshOthersTable();
+                                }}
+                                onCancel={() => setOtherDialogOpen(false)}
+                            />
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {/* Dialog: Historique fonds d'autrui */}
+                <Dialog open={othersTableOpen} onOpenChange={setOthersTableOpen}>
+                    <DialogContent className="sm:max-w-3xl space-y-3">
+                        <OthersBalancesTable
+                            refreshKey={othersTableRefreshKey}
+                            accountCurrency={accounts[0]?.currency || 'MAD'}
+                            selectedYear={othersSelectedYear}
+                            years={years}
+                            onYearChange={(year) => {
+                                setOthersSelectedYear(year);
+                                setOthersTableRefreshKey(k => k + 1);
+                            }}
+                            actions={
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                        if (!accounts.length) return;
+                                        setSelectedAccountForOther((prev) => prev ?? accounts[0]);
+                                        setOtherDialogOpen(true);
+                                    }}
+                                    disabled={!accounts.length}
+                                >
+                                    <DollarSign className="h-4 w-4 mr-2" />
+                                    Saisir un fonds
+                                </Button>
+                            }
+                        />
+                    </DialogContent>
+                </Dialog>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
@@ -157,6 +242,7 @@ const Index2 = () => {
                     <TabsContent value="table" className="mt-0 w-full">
                         <AccountsTable
                             accounts={accounts}
+                            othersBalances={othersBalances}
                             year={selectedYear}
                             onEdit={handleEditName}
                             onBalanceManager={(account) => {
@@ -168,7 +254,14 @@ const Index2 = () => {
                                 setQuickBalanceDialogOpen(true);
                             }}
                             onDelete={(account) => handleDelete(account)}
-                            onRefresh={() => fetchAccounts(selectedYear)}
+                            onRefresh={() => {
+                                fetchAccounts(selectedYear);
+                                fetchOthersBalances(selectedYear);
+                            }}
+                            onOpenOthersForm={(account) => {
+                                setSelectedAccountForOther(account);
+                                setOtherDialogOpen(true);
+                            }}
                         />
                     </TabsContent>
 
@@ -260,7 +353,17 @@ const createSchema = zod.object({
 
 type CreateFormValues = zod.infer<typeof createSchema>;
 
-const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks, initialData }: { onSuccess?: () => void, banks: any[], loadingBanks: boolean, initialData?: BankAccountRow }) => {
+const CreateBankAccountForm = ({
+    onSuccess,
+    banks,
+    loadingBanks,
+    initialData
+}: {
+    onSuccess?: () => void;
+    banks: any[];
+    loadingBanks: boolean;
+    initialData?: BankAccountRow;
+}) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
@@ -278,10 +381,7 @@ const CreateBankAccountForm = ({ onSuccess, banks, loadingBanks, initialData }: 
     const onSubmit = async (values: CreateFormValues) => {
         setIsSubmitting(true);
         try {
-            const payload = {
-                ...values,
-                bank_id: Number(values.bank_id)
-            };
+            const payload = { ...values, bank_id: Number(values.bank_id) };
             if (initialData) {
                 await trigger(ROUTES.bankAccounts.update(initialData.id), { method: 'put', data: payload });
                 showSuccess('Compte mis à jour avec succès');

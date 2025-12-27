@@ -11,15 +11,6 @@ export const APP_ROUTES = {
     comptesBancaires: {
         index: `${PROTECTED_PREFIX}/comptes-bancaires`,
     },
-    voitures: {
-        index: `${PROTECTED_PREFIX}/voitures`,
-    },
-    batiments: {
-        index: `${PROTECTED_PREFIX}/batiments`,
-    },
-    typesDeBatiments: {
-        index: `${PROTECTED_PREFIX}/types-de-batiments`,
-    },
     projets: {
         index: `${PROTECTED_PREFIX}/projets`,
     },
@@ -28,9 +19,6 @@ export const APP_ROUTES = {
     },
     prets: {
         index: `${PROTECTED_PREFIX}/prets`,
-    },
-    terrains: {
-        index: `${PROTECTED_PREFIX}/terrains`,
     },
     banques: {
         index: `${PROTECTED_PREFIX}/banques`,

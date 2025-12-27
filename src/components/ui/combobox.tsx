@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, JSX } from 'react';
+import React, { useState, useRef, JSX } from 'react';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
@@ -53,44 +53,20 @@ const Combobox = <TOption, TValue extends Primitive = string>({
     },
     renderOption,
     open,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onOpenChange = (_newOpen: boolean) => { },
+    onOpenChange,
     ...props
 }: ComboboxProps<TOption, TValue>) => {
     const [internalOpen, setInternalOpen] = useState<boolean>(false);
     const [searchValue, setSearchValue] = useState<string>('');
     const inputRef = useRef<HTMLInputElement | null>(null);
 
-    // Use controlled open state if provided, otherwise use internal state
     const isOpen = open !== undefined ? open : internalOpen;
     const handleOpenChange = (newOpen: boolean): void => {
-        if (onOpenChange) {
-            onOpenChange(newOpen);
-        } else {
+        if (open === undefined) {
             setInternalOpen(newOpen);
         }
-
-        // Focus input when opening
-        if (newOpen) {
-            setTimeout(() => {
-                inputRef.current?.focus();
-            }, 0);
-        }
+        onOpenChange?.(newOpen);
     };
-
-    // Keep input focused when open
-    useEffect(() => {
-        if (isOpen && inputRef.current) {
-            const interval = setInterval(() => {
-                if (document.activeElement !== inputRef.current) {
-                    inputRef.current?.focus();
-                }
-            }, 100);
-
-            return () => clearInterval(interval);
-        }
-        return () => { };
-    }, [isOpen]);
 
     const selectedOption = options.find((option) => {
         const optVal = getValue(option);
@@ -104,7 +80,6 @@ const Combobox = <TOption, TValue extends Primitive = string>({
         }
     };
 
-    // Check if placeholder indicates loading state
     const isPlaceholderLoading = Boolean(placeholder) && (
         String(placeholder).includes('Chargement') ||
         String(placeholder).includes('Loading') ||
@@ -136,13 +111,12 @@ const Combobox = <TOption, TValue extends Primitive = string>({
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
-                <Command key={`command-${options.length}`} shouldFilter={false}>
+                <Command>
                     <CommandInput
                         ref={inputRef}
                         placeholder={searchPlaceholder}
                         value={searchValue}
                         onValueChange={handleSearchValueChange}
-                        autoFocus={true}
                     />
                     <CommandList>
                         <CommandEmpty>
@@ -160,10 +134,11 @@ const Combobox = <TOption, TValue extends Primitive = string>({
                                 return (
                                     <CommandItem
                                         key={key}
+                                        value={key}
                                         onSelect={() => {
                                             onValueChange(optVal ?? null);
                                             handleOpenChange(false);
-                                            setSearchValue(''); // Clear search after selection
+                                            setSearchValue('');
                                         }}
                                     >
                                         <Check

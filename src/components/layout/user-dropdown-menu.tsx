@@ -30,11 +30,6 @@ const SideItems: NavItem[] = [
         icon: 'IconUser',
     },
     {
-        title: 'Types de Bâtiments',
-        url: APP_ROUTES.typesDeBatiments.index,
-        icon: 'IconBuildingCommunity',
-    },
-    {
         title: 'Banques',
         url: APP_ROUTES.banques.index,
         icon: 'IconBuildingBank',

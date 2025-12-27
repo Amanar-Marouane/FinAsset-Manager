@@ -13,33 +13,15 @@ export const ROUTES = {
   profile: `/${CURRENT_VERSION}/profile`,
 
   // ----- Protected Modules -----
-  buildings: {
-    index: `/${CURRENT_VERSION}/buildings`,
-    create: `/${CURRENT_VERSION}/buildings/create`,
-    store: `/${CURRENT_VERSION}/buildings/store`,
-    edit: (id: string | number) => `/${CURRENT_VERSION}/buildings/edit/${id}`,
-    update: (id: string | number) => `/${CURRENT_VERSION}/buildings/update/${id}`,
-    show: (id: string | number) => `/${CURRENT_VERSION}/buildings/show/${id}`,
-    delete: (id: string | number) => `/${CURRENT_VERSION}/buildings/delete/${id}`,
-  },
-  buildingTypes: {
-    index: `/${CURRENT_VERSION}/building-types`,
-    all: `/${CURRENT_VERSION}/building-types/all`,
-    create: `/${CURRENT_VERSION}/building-types/create`,
-    store: `/${CURRENT_VERSION}/building-types/store`,
-    edit: (id: string | number) => `/${CURRENT_VERSION}/building-types/edit/${id}`,
-    update: (id: string | number) => `/${CURRENT_VERSION}/building-types/update/${id}`,
-    show: (id: string | number) => `/${CURRENT_VERSION}/building-types/show/${id}`,
-    delete: (id: string | number) => `/${CURRENT_VERSION}/building-types/delete/${id}`,
-  },
-  cars: {
-    index: `/${CURRENT_VERSION}/cars`,
-    create: `/${CURRENT_VERSION}/cars/create`,
-    store: `/${CURRENT_VERSION}/cars/store`,
-    edit: (id: string | number) => `/${CURRENT_VERSION}/cars/edit/${id}`,
-    update: (id: string | number) => `/${CURRENT_VERSION}/cars/update/${id}`,
-    show: (id: string | number) => `/${CURRENT_VERSION}/cars/show/${id}`,
-    delete: (id: string | number) => `/${CURRENT_VERSION}/cars/delete/${id}`,
+  investTypes: {
+    index: `/${CURRENT_VERSION}/invest-types`,
+    all: `/${CURRENT_VERSION}/invest-types/all`,
+    create: `/${CURRENT_VERSION}/invest-types/create`,
+    store: `/${CURRENT_VERSION}/invest-types/store`,
+    edit: (id: string | number) => `/${CURRENT_VERSION}/invest-types/edit/${id}`,
+    update: (id: string | number) => `/${CURRENT_VERSION}/invest-types/update/${id}`,
+    show: (id: string | number) => `/${CURRENT_VERSION}/invest-types/show/${id}`,
+    delete: (id: string | number) => `/${CURRENT_VERSION}/invest-types/delete/${id}`,
   },
   projects: {
     index: `/${CURRENT_VERSION}/projects`,
@@ -49,9 +31,15 @@ export const ROUTES = {
     update: (id: string | number) => `/${CURRENT_VERSION}/projects/update/${id}`,
     show: (id: string | number) => `/${CURRENT_VERSION}/projects/show/${id}`,
     delete: (id: string | number) => `/${CURRENT_VERSION}/projects/delete/${id}`,
+    byYearAndType: `/${CURRENT_VERSION}/projects/by-year`,
+  },
+  projectEntries: {
+    store: `/${CURRENT_VERSION}/project-entries/store`,
+    delete: `/${CURRENT_VERSION}/project-entries/delete`,
   },
   credits: {
     index: `/${CURRENT_VERSION}/credits`,
+    all: `/${CURRENT_VERSION}/credits/all`,
     create: `/${CURRENT_VERSION}/credits/create`,
     store: `/${CURRENT_VERSION}/credits/store`,
     edit: (id: string | number) => `/${CURRENT_VERSION}/credits/edit/${id}`,
@@ -59,14 +47,23 @@ export const ROUTES = {
     show: (id: string | number) => `/${CURRENT_VERSION}/credits/show/${id}`,
     delete: (id: string | number) => `/${CURRENT_VERSION}/credits/delete/${id}`,
   },
+  creditEntries: {
+    store: `/${CURRENT_VERSION}/credit-entries/store`,
+    delete: `/${CURRENT_VERSION}/credit-entries/delete`,
+  },
   prets: {
     index: `/${CURRENT_VERSION}/prets`,
+    all: `/${CURRENT_VERSION}/prets/all`,
     create: `/${CURRENT_VERSION}/prets/create`,
     store: `/${CURRENT_VERSION}/prets/store`,
     edit: (id: string | number) => `/${CURRENT_VERSION}/prets/edit/${id}`,
     update: (id: string | number) => `/${CURRENT_VERSION}/prets/update/${id}`,
     show: (id: string | number) => `/${CURRENT_VERSION}/prets/show/${id}`,
     delete: (id: string | number) => `/${CURRENT_VERSION}/prets/delete/${id}`,
+  },
+  pretEntries: {
+    store: `/${CURRENT_VERSION}/pret-entries/store`,
+    delete: `/${CURRENT_VERSION}/pret-entries/delete`,
   },
   loans: {
     index: `/${CURRENT_VERSION}/loans`,
@@ -75,15 +72,6 @@ export const ROUTES = {
     edit: (id: string | number) => `/${CURRENT_VERSION}/loans/edit/${id}`,
     update: (id: string | number) => `/${CURRENT_VERSION}/loans/update/${id}`,
     show: (id: string | number) => `/${CURRENT_VERSION}/loans/show/${id}`,
-  },
-  terrains: {
-    index: `/${CURRENT_VERSION}/terrains`,
-    create: `/${CURRENT_VERSION}/terrains/create`,
-    store: `/${CURRENT_VERSION}/terrains/store`,
-    edit: (id: string | number) => `/${CURRENT_VERSION}/terrains/edit/${id}`,
-    update: (id: string | number) => `/${CURRENT_VERSION}/terrains/update/${id}`,
-    show: (id: string | number) => `/${CURRENT_VERSION}/terrains/show/${id}`,
-    delete: (id: string | number) => `/${CURRENT_VERSION}/terrains/delete/${id}`,
   },
   dashboard: {
     metrics: `/${CURRENT_VERSION}/dashboard/metrics`,
@@ -112,7 +100,11 @@ export const ROUTES = {
     store: `/${CURRENT_VERSION}/account-balances/store`,
     update: (id: string | number) => `/${CURRENT_VERSION}/account-balances/update/${id}`,
     delete: (id: string | number) => `/${CURRENT_VERSION}/account-balances/delete/${id}`,
-    insertOtherPersonMoney: `/${CURRENT_VERSION}/account-balances/insert-other-person-money`,
     byDateAndAccountId: (id: string | number) => `/${CURRENT_VERSION}/account-balances/by-date-and-account-id/${id}`,
+  },
+  othersBalances: {
+    index: `/${CURRENT_VERSION}/others-balances`,
+    byYear: (year: string | number) => `/${CURRENT_VERSION}/others-balances/year/${year}`,
+    store: `/${CURRENT_VERSION}/others-balances/store`,
   },
 };

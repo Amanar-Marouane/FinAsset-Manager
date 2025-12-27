@@ -1,7 +1,7 @@
 'use client';
 
-import Index from "@/features/prets/Index";
+import Index2 from "@/features/prets/Index2";
 
 export default function Page() {
-    return <Index />;
+    return <Index2 />;
 }

@@ -22,9 +22,12 @@ export type BankAccountSchema = {
     bank_id: number;
     bank: Bank;
     balances: AccountBalance[];
-    previous_year_last_balance: string | null;
-    account_number: string;
     account_name: string;
+    account_number: string;
+    last_inserted_balance: string | null;
+    last_inserted_balance_date: string | null;
+    previous_year_last_balance: string | null;
+    previous_year_last_balance_date: string | null;
     currency: string;
     created_at: string;
     updated_at: string;
@@ -32,10 +35,22 @@ export type BankAccountSchema = {
 
 export type AccountBalance = {
     id: number;
-    bank_account_id: number;
+    account_id: number;
+    year: number;
+    month: number;
     date: string;
     amount: string;
-    other_person_money: string;
+    created_at: string;
+    updated_at: string;
+};
+
+export type OthersBalances = {
+    id: number;
+    year: number;
+    month: number;
+    date: string;
+    amount: string;
+    previous_year_last_balance: string | null;
     created_at: string;
     updated_at: string;
 };

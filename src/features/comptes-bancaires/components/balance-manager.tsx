@@ -1,4 +1,4 @@
-import { CustomTableColumn, UseCustomTableReturnType } from "@/components/custom/data-table/types";
+import { CustomTableColumn } from "@/components/custom/data-table/types";
 import DeleteModal from "@/components/modal/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,13 +8,12 @@ import CustomTable from "@/components/ui/table/custom-table";
 import { ROUTES } from "@/constants/routes";
 import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
-import { AccountBalance, BankAccount } from "@/types/bank-types";
+import { AccountBalance } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Edit, Plus, DollarSign } from "lucide-react";
+import { Edit, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z as zod } from 'zod';
-import { OtherPersonMoneyForm } from "./other-person-money-form";
 
 const balanceSchema = zod.object({
     date: zod.string().min(1, { message: 'Date requise' }),
@@ -100,7 +99,6 @@ const BalanceForm = ({ accountId, initialData, onSuccess, onCancel }: { accountI
 export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefresh }: { accountId: number, accountCurrency: string, onParentTableRefresh?: () => void; }) => {
     const [createOpen, setCreateOpen] = useState(false);
     const [editBalance, setEditBalance] = useState<AccountBalance | null>(null);
-    const [otherPersonMoneyOpen, setOtherPersonMoneyOpen] = useState(false);
     const { trigger } = useApi();
     const { showError, showSuccess } = useAppContext();
     const [refreshKey, setRefreshKey] = useState(0);
@@ -132,12 +130,6 @@ export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefres
             label: 'Solde',
             sortable: true,
             render: (val: any) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: accountCurrency }).format(Number(val))
-        },
-        {
-            data: 'other_person_money',
-            label: "Argent d'autre personne",
-            sortable: true,
-            render: (val: any) => val ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: accountCurrency }).format(Number(val)) : '—'
         },
         {
             data: 'actions',
@@ -174,26 +166,6 @@ export const BalanceManager = ({ accountId, accountCurrency, onParentTableRefres
                             <option key={y} value={y}>{y}</option>
                         ))}
                     </select>
-                    <Dialog open={otherPersonMoneyOpen} onOpenChange={setOtherPersonMoneyOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">
-                                <DollarSign className="h-4 w-4 mr-2" /> Fonds d'autrui
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Gérer les fonds d'autrui</DialogTitle>
-                            </DialogHeader>
-                            <OtherPersonMoneyForm
-                                accountId={accountId}
-                                onSuccess={() => {
-                                    setOtherPersonMoneyOpen(false);
-                                    refreshTable();
-                                }}
-                                onCancel={() => setOtherPersonMoneyOpen(false)}
-                            />
-                        </DialogContent>
-                    </Dialog>
                     <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                         <DialogTrigger asChild>
                             <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Nouveau Solde</Button>

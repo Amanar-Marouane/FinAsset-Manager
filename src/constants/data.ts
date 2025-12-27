@@ -13,16 +13,6 @@ export const navItems: NavItem[] = [
     icon: "bank",
   },
   {
-    title: "Voitures",
-    url: APP_ROUTES.voitures.index,
-    icon: "car",
-  },
-  {
-    title: "Bâtiments",
-    url: APP_ROUTES.batiments.index,
-    icon: "building",
-  },
-  {
     title: "Projets",
     url: APP_ROUTES.projets.index,
     icon: "project",
@@ -36,10 +26,5 @@ export const navItems: NavItem[] = [
     title: "Prêts",
     url: APP_ROUTES.prets.index,
     icon: "loan",
-  },
-  {
-    title: "Terrains",
-    url: APP_ROUTES.terrains.index,
-    icon: "land",
   },
 ];

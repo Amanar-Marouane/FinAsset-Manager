@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import CustomTable from "@/components/ui/table/custom-table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,12 +56,6 @@ const Index = () => {
             render: (v: any) => v ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(Number(v)) : '-'
         },
         {
-            data: 'net',
-            label: 'Net Mensuel',
-            sortable: true,
-            render: (v: any) => v ? new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'MAD' }).format(Number(v)) + '/mois' : '-'
-        },
-        {
             data: 'actions',
             label: 'Actions',
             sortable: false,
@@ -88,7 +83,6 @@ const Index = () => {
     const filters: CustomTableFilterConfig[] = [
         { field: 'name', label: 'Nom', type: 'text' },
         { field: 'capital', label: 'Capital', type: 'number' },
-        { field: 'net', label: 'Net Mensuel', type: 'number' },
     ];
 
     return (
@@ -153,7 +147,6 @@ const Index = () => {
 const projectSchema = zod.object({
     name: zod.string().min(1, 'Le nom est requis'),
     capital: zod.string().min(1, 'Le capital est requis'),
-    net: zod.string().min(1, 'Le net est requis'),
 });
 
 type ProjectFormValues = zod.infer<typeof projectSchema>;
@@ -168,7 +161,6 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
         defaultValues: {
             name: initialData?.name || '',
             capital: initialData?.capital || '',
-            net: initialData?.net || '',
         }
     });
 
@@ -178,7 +170,6 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
             const payload = {
                 name: values.name,
                 capital: values.capital,
-                net: values.net,
             };
 
             if (initialData) {
@@ -200,7 +191,7 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                <div>
                     <FormField
                         control={form.control}
                         name="name"
@@ -212,25 +203,15 @@ const ProjectForm = ({ onSuccess, initialData }: { onSuccess: () => void, initia
                             </FormItem>
                         )}
                     />
+
+                </div>
+                <div>
                     <FormField
                         control={form.control}
                         name="capital"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Capital</FormLabel>
-                                <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                    <FormField
-                        control={form.control}
-                        name="net"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Net Mensuel</FormLabel>
                                 <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>

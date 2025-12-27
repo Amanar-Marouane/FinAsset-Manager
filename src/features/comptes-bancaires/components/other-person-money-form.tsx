@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ROUTES } from "@/constants/routes";
 import useApi, { ApiError } from "@/hooks/use-api";
 import { useAppContext } from "@/hooks/use-app-context";
-import { AccountBalance } from "@/types/bank-types";
+import { OthersBalances } from "@/types/bank-types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -21,11 +21,12 @@ type OtherPersonMoneyFormValues = zod.infer<typeof otherPersonMoneySchema>;
 
 interface OtherPersonMoneyFormProps {
     accountId: number;
+    othersBalances: OthersBalances[];
     onSuccess: () => void;
     onCancel: () => void;
 }
 
-export const OtherPersonMoneyForm = ({ accountId, onSuccess, onCancel }: OtherPersonMoneyFormProps) => {
+export const OtherPersonMoneyForm = ({ accountId, othersBalances, onSuccess, onCancel }: OtherPersonMoneyFormProps) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { trigger } = useApi();
@@ -39,19 +40,13 @@ export const OtherPersonMoneyForm = ({ accountId, onSuccess, onCancel }: OtherPe
         }
     });
 
-    const fetchExistingRecord = async (date: string) => {
+    const fetchExistingRecord = (date: string) => {
         setIsLoading(true);
         try {
-            const response = await trigger<{ data: AccountBalance }>(
-                `${ROUTES.accountBalances.byDateAndAccountId(accountId)}?date=${date}-01`,
-                { method: 'get' }
-            );
-            if (response.data?.data?.other_person_money) {
-                form.setValue('other_person_money', response.data.data.other_person_money);
-            }
-        } catch (e) {
-            const err = e as ApiError;
-            if (err.status === 404) {
+            const existing = othersBalances.find(b => b.date === date);
+            if (existing) {
+                form.setValue('other_person_money', existing.amount);
+            } else {
                 form.setValue('other_person_money', '');
             }
         } finally {
@@ -64,7 +59,7 @@ export const OtherPersonMoneyForm = ({ accountId, onSuccess, onCancel }: OtherPe
         if (currentDate) {
             fetchExistingRecord(currentDate);
         }
-    }, [accountId]);
+    }, [accountId, othersBalances]);
 
     const handleDateChange = (date: string) => {
         form.setValue('date', date);
@@ -75,12 +70,10 @@ export const OtherPersonMoneyForm = ({ accountId, onSuccess, onCancel }: OtherPe
         setIsSubmitting(true);
         try {
             const payload = {
-                bank_account_id: accountId,
-                date: `${values.date}-01`,
-                other_person_money: Number(values.other_person_money)
+                date: values.date,
+                amount: Number(values.other_person_money)
             };
-
-            await trigger(ROUTES.accountBalances.insertOtherPersonMoney, { method: 'post', data: payload });
+            await trigger(ROUTES.othersBalances.store, { method: 'post', data: payload });
             showSuccess("Montant des fonds d'autrui mis à jour avec succès");
             onSuccess();
         } catch (e) {
