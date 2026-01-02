@@ -6,6 +6,8 @@
     /* Deep Navy to match sidebar logic */
     --primary-foreground: #ffffff;
     --primary-bold: #0f172a;
+    --primary-80: color-mix(in srgb, var(--primary), transparent 20%);
+    --primary-bold-80: color-mix(in srgb, var(--primary-bold), transparent 20%);
 
     /* =========================
      Sidebar (Deep Dark Blue - Kept as requested)
@@ -31,6 +33,7 @@
 
     --card: #ffffff;
     --card-foreground: #020817;
+    --card-bg: #ffffff;
 
     --popover: #ffffff;
     --popover-foreground: #020817;
